@@ -159,6 +159,85 @@
         "key": "shift+insert",
         "when": "editorTextFocus"
       }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "pasteShieldHistory",
+          "name": "PasteShield History",
+          "icon": "$(history)",
+          "contextualTitle": "PasteShield"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "pasteShield.refreshHistory",
+          "when": "view == pasteShieldHistory",
+          "group": "navigation"
+        },
+        {
+          "command": "pasteShield.clearHistory",
+          "when": "view == pasteShieldHistory",
+          "group": "navigation"
+        },
+        {
+          "command": "pasteShield.exportHistoryJson",
+          "when": "view == pasteShieldHistory",
+          "group": "secondary"
+        },
+        {
+          "command": "pasteShield.exportHistoryText",
+          "when": "view == pasteShieldHistory",
+          "group": "secondary"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "pasteShield.showLastReport",
+          "when": "view == pasteShieldHistory && viewItem == historyEntry",
+          "group": "inline"
+        }
+      ]
+    },
+    "colors": [
+      {
+        "id": "pasteShield.criticalForeground",
+        "description": "Foreground color for critical severity detections",
+        "defaults": {
+          "dark": "editorError.foreground",
+          "light": "editorError.foreground",
+          "highContrast": "errorForeground"
+        }
+      },
+      {
+        "id": "pasteShield.highForeground",
+        "description": "Foreground color for high severity detections",
+        "defaults": {
+          "dark": "editorWarning.foreground",
+          "light": "editorWarning.foreground",
+          "highContrast": "warningForeground"
+        }
+      },
+      {
+        "id": "pasteShield.mediumForeground",
+        "description": "Foreground color for medium severity detections",
+        "defaults": {
+          "dark": "editorInfo.foreground",
+          "light": "editorInfo.foreground",
+          "highContrast": "foreground"
+        }
+      },
+      {
+        "id": "pasteShield.lowForeground",
+        "description": "Foreground color for low severity detections",
+        "defaults": {
+          "dark": "descriptionForeground",
+          "light": "descriptionForeground",
+          "highContrast": "foreground"
+        }
+      }
     ]
   }
 }

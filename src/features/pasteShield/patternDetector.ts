@@ -1204,7 +1204,7 @@ const PATTERN_DEFINITIONS: PatternDefinition[] = [
 
   {
     name: 'Generic Password Assignment',
-    regex: /(?:password|passwd|pwd|secret|pass)\s*[:=]\s*['"][^'"]{8,}['"]/gi,
+    regex: /(?:password|passwd|pwd|secret|pass)\s*[:=]\s*['"][^'"]{16,}['"]/gi,
     severity: 'high',
     description: 'Hardcoded password or secret string detected.',
     redact: true,

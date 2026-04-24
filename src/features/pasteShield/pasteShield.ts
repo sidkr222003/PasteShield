@@ -25,6 +25,8 @@ import { scanContent, DetectionResult, Severity } from './patternDetector';
 import { getConfig, meetsSeverityThreshold, CONFIG_SECTION } from './pasteShieldConfig';
 import { createLogger } from '../../utils/logger';
 import { debounce } from '../../utils/debounce';
+import { HistoryManager, ScanHistoryEntry } from '../../utils/historyManager';
+import { HistoryViewProvider, HistoryItem } from './historyViewProvider';
 
 const logger = createLogger('PasteShield');
 
@@ -36,6 +38,11 @@ const SHOW_REPORT_COMMAND_ID = 'pasteShield.showLastReport';
 const CODELENS_FIX_COMMAND_ID = 'pasteShield.codeLensFix';
 const CODELENS_IGNORE_COMMAND_ID = 'pasteShield.codeLensIgnore';
 const CODELENS_DETAILS_COMMAND_ID = 'pasteShield.codeLensDetails';
+const SHOW_HISTORY_COMMAND_ID = 'pasteShield.showHistory';
+const CLEAR_HISTORY_COMMAND_ID = 'pasteShield.clearHistory';
+const EXPORT_HISTORY_JSON_COMMAND_ID = 'pasteShield.exportHistoryJson';
+const EXPORT_HISTORY_TEXT_COMMAND_ID = 'pasteShield.exportHistoryText';
+const REFRESH_HISTORY_COMMAND_ID = 'pasteShield.refreshHistory';
 
 /**
  * File names (basename only, case-insensitive) that are excluded from
@@ -46,11 +53,12 @@ const CODELENS_DETAILS_COMMAND_ID = 'pasteShield.codeLensDetails';
  */
 const PASTE_EXCLUDED_FILENAMES = new Set(['.env', '.env.local']);
 
-const SEVERITY_COLORS: Record<Severity, string> = {
-  critical: '#ff4444',
-  high:     '#ff8800',
-  medium:   '#ffcc00',
-  low:      '#44aaff',
+// Use VS Code theme colors instead of hardcoded colors for better responsiveness
+const SEVERITY_THEME_COLORS: Record<Severity, vscode.ThemeColor> = {
+  critical: new vscode.ThemeColor('editorError.foreground'),
+  high:     new vscode.ThemeColor('editorWarning.foreground'),
+  medium:   new vscode.ThemeColor('editorInfo.foreground'),
+  low:      new vscode.ThemeColor('descriptionForeground'),
 };
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -77,7 +85,7 @@ function createDecorationTypes(): {
   medium: vscode.TextEditorDecorationType;
   low: vscode.TextEditorDecorationType;
 } {
-  const make = (color: string, glyph: string) =>
+  const make = (themeColor: vscode.ThemeColor, glyph: string) =>
     vscode.window.createTextEditorDecorationType({
       after: {
         contentText: ` ${glyph} PasteShield`,
@@ -85,17 +93,17 @@ function createDecorationTypes(): {
         fontStyle: 'italic',
         margin: '0 0 0 8px',
       },
-      overviewRulerColor: color,
+      overviewRulerColor: themeColor,
       overviewRulerLane: vscode.OverviewRulerLane.Right,
-      light: { border: `1px dashed ${color}` },
-      dark:  { border: `1px dashed ${color}` },
+      light: { borderColor: themeColor, borderStyle: 'dashed', borderWidth: '1px' },
+      dark:  { borderColor: themeColor, borderStyle: 'dashed', borderWidth: '1px' },
     });
 
   return {
-    critical: make(SEVERITY_COLORS.critical, '$(error)'),
-    high:     make(SEVERITY_COLORS.high,     '$(shield)'),
-    medium:   make(SEVERITY_COLORS.medium,   '$(warning)'),
-    low:      make(SEVERITY_COLORS.low,      '$(info)'),
+    critical: make(SEVERITY_THEME_COLORS.critical, '$(error)'),
+    high:     make(SEVERITY_THEME_COLORS.high,     '$(shield)'),
+    medium:   make(SEVERITY_THEME_COLORS.medium,   '$(warning)'),
+    low:      make(SEVERITY_THEME_COLORS.low,      '$(info)'),
   };
 }
 
@@ -199,6 +207,9 @@ let activeDecorations: Array<{
   type: vscode.TextEditorDecorationType;
 }> = [];
 let codeLensProvider: PasteShieldCodeLensProvider | undefined;
+let historyManager: HistoryManager | undefined;
+let historyViewProvider: HistoryViewProvider | undefined;
+let historyTreeView: vscode.TreeView<HistoryItem> | undefined;
 
 /**
  * Debounced so rapid editor-tab switching (e.g. Ctrl+Tab held down) doesn't
@@ -218,6 +229,17 @@ const debouncedRefreshCodeLens = debounce(() => {
 export function registerPasteShield(context: vscode.ExtensionContext): void {
   decorationTypes  = createDecorationTypes();
   codeLensProvider = new PasteShieldCodeLensProvider();
+
+  // Initialize History Manager
+  historyManager = HistoryManager.getInstance(context);
+  historyViewProvider = new HistoryViewProvider(historyManager);
+
+  // Register History Tree View in sidebar
+  historyTreeView = vscode.window.createTreeView('pasteShieldHistory', {
+    treeDataProvider: historyViewProvider,
+    showCollapseAll: true,
+  });
+  context.subscriptions.push(historyTreeView);
 
   statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
@@ -282,12 +304,57 @@ export function registerPasteShield(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(SHOW_REPORT_COMMAND_ID, showLastReport),
   );
 
+  // ── History commands ───────────────────────────────────────────────────────
+  context.subscriptions.push(
+    vscode.commands.registerCommand(SHOW_HISTORY_COMMAND_ID, () => {
+      if (historyTreeView) {
+        historyTreeView.reveal(undefined as unknown as HistoryItem, { focus: true, select: true });
+      }
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(CLEAR_HISTORY_COMMAND_ID, async () => {
+      const confirm = await vscode.window.showWarningMessage(
+        'Are you sure you want to clear all scan history?',
+        { modal: true },
+        'Clear',
+      );
+      if (confirm === 'Clear' && historyManager) {
+        await historyManager.clearHistory();
+        historyViewProvider?.refresh();
+        vscode.window.showInformationMessage('PasteShield history cleared.');
+      }
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(EXPORT_HISTORY_JSON_COMMAND_ID, async () => {
+      if (!historyManager) return;
+      await exportHistory('json');
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(EXPORT_HISTORY_TEXT_COMMAND_ID, async () => {
+      if (!historyManager) return;
+      await exportHistory('text');
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(REFRESH_HISTORY_COMMAND_ID, () => {
+      historyViewProvider?.refresh();
+    }),
+  );
+
   // React to config changes — refresh CodeLens so ignored patterns apply live
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration(CONFIG_SECTION)) {
         updateStatusBar(getConfig().enabled);
         codeLensProvider?.refresh();
+        historyViewProvider?.refresh();
       }
     }),
   );
@@ -408,6 +475,16 @@ async function handlePaste(): Promise<void> {
     // Trigger a CodeLens refresh so the pasted secrets are highlighted
     debouncedRefreshCodeLens();
     logger.info(`PasteShield: user bypassed warning (${filtered.length} issue(s))`);
+    
+    // Add to history
+    if (historyManager) {
+      await historyManager.addEntry({
+        fileName: editor.document.fileName,
+        detections: filtered.map(d => ({ type: d.type, severity: d.severity, category: d.category })),
+        actionTaken: 'pasted',
+      });
+      historyViewProvider?.refresh();
+    }
     return;
   }
 
@@ -426,14 +503,44 @@ async function handlePaste(): Promise<void> {
       }
       debouncedRefreshCodeLens();
       logger.info('PasteShield: user bypassed warning after details review');
+      
+      // Add to history
+      if (historyManager) {
+        await historyManager.addEntry({
+          fileName: editor.document.fileName,
+          detections: filtered.map(d => ({ type: d.type, severity: d.severity, category: d.category })),
+          actionTaken: 'pasted',
+        });
+        historyViewProvider?.refresh();
+      }
     } else {
       logger.info('PasteShield: paste cancelled after details review');
+      
+      // Add to history
+      if (historyManager) {
+        await historyManager.addEntry({
+          fileName: editor.document.fileName,
+          detections: filtered.map(d => ({ type: d.type, severity: d.severity, category: d.category })),
+          actionTaken: 'cancelled',
+        });
+        historyViewProvider?.refresh();
+      }
     }
     return;
   }
 
   // 'Cancel' or dismissed → do nothing
   logger.info('PasteShield: paste cancelled by user');
+  
+  // Add to history
+  if (historyManager) {
+    await historyManager.addEntry({
+      fileName: editor.document.fileName,
+      detections: filtered.map(d => ({ type: d.type, severity: d.severity, category: d.category })),
+      actionTaken: 'cancelled',
+    });
+    historyViewProvider?.refresh();
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -682,6 +789,32 @@ async function togglePasteShield(): Promise<void> {
     },
     () => new Promise<void>(resolve => setTimeout(resolve, 2500)),
   );
+}
+
+async function exportHistory(format: 'json' | 'text'): Promise<void> {
+  if (!historyManager) {
+    vscode.window.showWarningMessage('History manager not initialized.');
+    return;
+  }
+
+  const content = format === 'json' 
+    ? historyManager.exportAsJson() 
+    : historyManager.exportAsText();
+  
+  const extension = format === 'json' ? 'json' : 'txt';
+  const defaultFileName = `pasteshield-history-${new Date().toISOString().split('T')[0]}.${extension}`;
+
+  const uri = await vscode.window.showSaveDialog({
+    defaultUri: vscode.Uri.file(defaultFileName),
+    filters: {
+      [format.toUpperCase()]: [extension],
+    },
+  });
+
+  if (uri) {
+    await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
+    vscode.window.showInformationMessage(`History exported to ${uri.fsPath}`);
+  }
 }
 
 async function showLastReport(): Promise<void> {
