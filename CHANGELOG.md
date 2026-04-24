@@ -26,7 +26,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 
 ---
 
-## v1.5.0 — Pattern Expansion (COMPLETED)
+## v1.6.0 — Pattern Expansion (COMPLETED)
 
 - [x] Add detection for AWS, GCP, and Azure credential patterns
 - [x] Add detection for Slack, Stripe, and GitHub tokens
@@ -76,4 +76,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 - [x] Invalid regex validation with user-friendly error messages
 - [x] File system watchers for `.pasteshieldignore` and `.gitignore` auto-refresh
 - [x] Fixed the Run When it was not working properly
+
 ---
+
+## v1.7.0 — Custom Patterns & Ignore Management (COMPLETED)
+- [x] Fixed and reduced the size of package more
+- [x] optimized the code more
