@@ -20,7 +20,7 @@ export interface ScanHistoryEntry {
     severity: string;
     category?: string;
   }>;
-  actionTaken: 'pasted' | 'cancelled' | 'ignored';
+  actionTaken: 'pasted' | 'pasted_silent' | 'cancelled' | 'ignored';
 }
 
 export class HistoryManager {
@@ -120,6 +120,7 @@ export class HistoryManager {
       
       switch (entry.actionTaken) {
         case 'pasted':
+        case 'pasted_silent':
           stats.pastedCount++;
           break;
         case 'cancelled':
