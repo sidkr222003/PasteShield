@@ -79,3 +79,4 @@ Planned features and improvements for future releases.
 - [ ] Custom severity override per workspace
 - [ ] Pattern marketplace / community pattern sharing
 
+
