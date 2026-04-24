@@ -31,21 +31,6 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-.PyInstaller/
-.pytest_cache/
-.mypy_cache/
 
 # Node.js
 npm-debug.log*

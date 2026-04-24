@@ -6,15 +6,23 @@ Thank you for your interest in contributing! This document covers everything you
 
 ## Table of Contents
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
-- [Project Structure](#project-structure)
-- [Making Changes](#making-changes)
-- [Submitting a Pull Request](#submitting-a-pull-request)
-- [Reporting Bugs](#reporting-bugs)
-- [Requesting Features](#requesting-features)
-
+- [Contributing to PasteShield](#contributing-to-pasteshield)
+  - [Table of Contents](#table-of-contents)
+  - [Code of Conduct](#code-of-conduct)
+  - [Getting Started](#getting-started)
+  - [Development Setup](#development-setup)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+    - [Running the Extension](#running-the-extension)
+  - [Project Structure](#project-structure)
+  - [Making Changes](#making-changes)
+    - [Adding a Detection Pattern](#adding-a-detection-pattern)
+    - [Coding Style](#coding-style)
+    - [Commit Messages](#commit-messages)
+  - [Submitting a Pull Request](#submitting-a-pull-request)
+  - [Reporting Bugs](#reporting-bugs)
+  - [Requesting Features](#requesting-features)
+  
 ---
 
 ## Code of Conduct

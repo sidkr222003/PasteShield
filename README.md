@@ -37,20 +37,20 @@ For a deep dive into how each module works, see [ARCHITECTURE.md](ARCHITECTURE.m
 
 ## Features
 
-### 🔍 Real-time paste interception
+### Real-time paste interception
 Every `Ctrl+V` / `Cmd+V` is scanned instantly. If a risk is detected you get a clear warning with severity, pattern name, and the option to proceed or cancel — all without ever leaving the editor.
 
-### 🔇 Silent mode (non-blocking scan)
+### Silent mode (non-blocking scan)
 Enable **silent mode** in settings to log detections to the sidebar without blocking paste. Perfect for new users who want visibility without interruption, or teams that prefer audit trails over hard blocks.
 
-### 🛡️ Inline CodeLens warnings
+### Inline CodeLens warnings
 PasteShield also scans already-open files and surfaces CodeLens annotations directly above risky lines. Each lens shows the severity and provides one-click actions: view details, ignore the pattern, or open settings.
 
 <div align="center">
   <img src="resources/codelens.gif" alt="PasteShield in action" width="600"/>
 </div>
 
-### 🎯 Severity levels
+### Severity levels
 Filter noise by choosing the minimum severity that triggers a warning:
 
 | Level | What it catches |
@@ -60,37 +60,37 @@ Filter noise by choosing the minimum severity that triggers a warning:
 | **Medium** *(default)* | `eval()`, `innerHTML`, `document.write` |
 | **Low** | `setTimeout`/`setInterval` with string arguments |
 
-### 📋 Scan report
+### Scan report
 Run **PasteShield: Show Last Scan Report** from the command palette to review a full breakdown of everything detected in the last paste — pattern names, severities, and matched content.
 
-### 📜 Persistent scan history
+### Persistent scan history
 All scans are stored in VS Code's global state across sessions. View them in the **PasteShield History** sidebar, export as JSON or plain text, and clear them anytime.
 
-### 📊 Statistics dashboard
+### Statistics dashboard
 Run **PasteShield: Show Statistics** to open an ASCII dashboard with total scans, threats blocked, severity breakdowns, top detected types, 7-day trends, and a risk score (0–100).
 
-### 🧩 Custom patterns
+### Custom patterns
 Define your own regex patterns via **PasteShield: Manage Custom Patterns**. Add, edit, toggle, remove, import, and export custom rules with full severity and category support.
 
-### 🔐 Secret management integration
+### Secret management integration
 Store detected secrets securely in HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, or Google Secret Manager. Rotate, list, and delete secrets without leaving VS Code.
 
-### 🏢 Enterprise policy enforcement
+### Enterprise policy enforcement
 Enable team-wide security policies with `.pasteshield-policy.json`. Block critical patterns, enforce audit logging, generate compliance reports, and apply strict/moderate/permissive policy templates.
 
-### 🔗 Team mode: shared policy URL
+### Team mode: shared policy URL
 Distribute a `.pasteshield-policy.json` via a URL (e.g. hosted on GitHub). One config update propagates to all team members automatically. This makes the enterprise tier genuinely sticky — centralize policy management across your entire organization.
 
-### 📝 Ignore pattern management
+### Ignore pattern management
 Ignore patterns at the user level (settings), workspace level (`.pasteshieldignore` file), or automatically from `.gitignore` entries related to secrets.
 
-### 🔔 Secret rotation reminders
+### Secret rotation reminders
 Run **PasteShield: Show Rotation Reminders** to see secrets that haven't been rotated in the configured number of days (default 90).
 
-### 📄 Audit log export
+### Audit log export
 Export a JSON audit trail of all scans, detections, and actions taken for compliance reporting.
 
-### ⚙️ Granular control
+### Granular control
 - Ignore specific patterns by name
 - Disable scanning for chosen languages (e.g. `markdown`, `plaintext`)
 - Exclude specific files from CodeLens scanning
@@ -392,5 +392,5 @@ npm run watch
 
 ## License
 
-[MIT](LICENSE) © 2024 NK2552003
+[MIT](LICENSE) © 2026 Sid Kr. (NK2552003 - Nitish)
 
