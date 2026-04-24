@@ -79,6 +79,33 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 
 ---
 
-## v1.7.0 — Custom Patterns & Ignore Management (COMPLETED)
-- [x] Fixed and reduced the size of package more
-- [x] optimized the code more
+## [1.7.0] — 2026-05-15
+
+### Added
+
+- Expanded pattern coverage to **~200 patterns across 25+ categories**:
+  - New categories: Mobile / IoT, Search & Data, Storage & CDN, Maps & Geo
+  - New AI providers: xAI/Grok, DeepSeek, Together AI, Voyage, Fireworks, Cerebras, Fal.ai, Modal, Baseten
+  - New infrastructure: Infisical, Cloudsmith, Fastly
+  - New databases: Weaviate, Qdrant, Xata, Fauna, CockroachDB, Convex
+  - New monitoring: Honeycomb, Axiom, Better Stack, Rollbar, Bugsnag
+  - New auth: WorkOS, Stytch, Passage by 1Password
+  - New crypto: Moralis, Helius
+  - New social APIs: LinkedIn, Intercom, HubSpot, Zendesk, Salesforce, Asana, Jira, Confluence, WooCommerce, Contentful, Sanity, Vercel Blob
+  - New package registries: JFrog Artifactory, Sonatype Nexus
+  - Enhanced PII: Canadian SIN, passport numbers
+
+### Security
+
+- **Migrated all provider credentials to VS Code SecretStorage** (OS-level keychain). AWS keys, Azure secrets, Vault tokens, and GCP credentials are no longer stored in `settings.json`. They are collected via secure password prompts and stored in the OS keychain (Windows Credential Manager, macOS Keychain, Linux libsecret).
+- Removed plaintext credential fields from extension manifest (`package.json`).
+
+### Changed
+
+- Fixed marketplace category to `Other` only (removed `Programming Languages`, `Machine Learning`, `Data Science`, `Debuggers`).
+- Added `linter` keyword for better discoverability.
+- Updated all documentation to reflect ~200 patterns / 25+ categories and SecretStorage architecture.
+
+### Fixed
+
+- Reduced package size and optimized code.

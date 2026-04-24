@@ -72,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('pasteShield.configureSecretManager', async () => {
       const provider = await vscode.window.showQuickPick(
         [
-          { label: 'none', description: 'No secret manager' },
+          { label: 'none', description: 'No secret manager — use VS Code SecretStorage (OS keychain)' },
           { label: 'vault', description: 'HashiCorp Vault' },
           { label: 'aws', description: 'AWS Secrets Manager' },
           { label: 'azure', description: 'Azure Key Vault' },
@@ -86,8 +86,12 @@ export function activate(context: vscode.ExtensionContext) {
       const config = vscode.workspace.getConfiguration('pasteShield');
       await config.update('secretManagerProvider', provider.label, vscode.ConfigurationTarget.Global);
       
-      vscode.window.showInformationMessage(`Secret manager set to ${provider.description}. Configure credentials in settings.`);
-      await vscode.commands.executeCommand('workbench.action.openSettings', 'pasteShield.secretManagerProvider');
+      if (provider.label !== 'none') {
+        const secretManager = SecretManagementIntegration.getInstance(context);
+        await promptForProviderCredentials(secretManager, provider.label);
+      }
+      
+      vscode.window.showInformationMessage(`Secret manager configured. Credentials are stored securely via VS Code SecretStorage — never in settings.json.`);
     })
   );
   
@@ -350,6 +354,44 @@ async function exportCustomPatterns(manager: CustomPatternsManager): Promise<voi
   if (uri) {
     await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
     vscode.window.showInformationMessage(`Custom patterns exported to ${uri.fsPath}`);
+  }
+}
+
+async function promptForProviderCredentials(
+  secretManager: SecretManagementIntegration,
+  provider: string
+): Promise<void> {
+  const passwordInput = async (prompt: string, placeHolder: string) => {
+    return await vscode.window.showInputBox({ prompt, placeHolder, password: true });
+  };
+
+  switch (provider) {
+    case 'vault': {
+      const token = await passwordInput('Enter Vault authentication token', 'hvs.xxx...');
+      if (token) await secretManager.storeCredential('vaultToken', token);
+      break;
+    }
+    case 'aws': {
+      const accessKeyId = await passwordInput('Enter AWS Access Key ID', 'AKIA...');
+      if (accessKeyId) await secretManager.storeCredential('awsAccessKeyId', accessKeyId);
+      const secretKey = await passwordInput('Enter AWS Secret Access Key', '');
+      if (secretKey) await secretManager.storeCredential('awsSecretAccessKey', secretKey);
+      break;
+    }
+    case 'azure': {
+      const tenantId = await passwordInput('Enter Azure AD Tenant ID', '00000000-0000-0000-0000-000000000000');
+      if (tenantId) await secretManager.storeCredential('azureTenantId', tenantId);
+      const clientId = await passwordInput('Enter Azure Client ID', '');
+      if (clientId) await secretManager.storeCredential('azureClientId', clientId);
+      const clientSecret = await passwordInput('Enter Azure Client Secret', '');
+      if (clientSecret) await secretManager.storeCredential('azureClientSecret', clientSecret);
+      break;
+    }
+    case 'gcp': {
+      const credentials = await passwordInput('Enter GCP service account credentials (JSON)', '{ "type": "service_account", ... }');
+      if (credentials) await secretManager.storeCredential('gcpCredentials', credentials);
+      break;
+    }
   }
 }
 

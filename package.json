@@ -13,17 +13,14 @@
     "vscode": "^1.93.0"
   },
   "categories": [
-    "Other",
-    "Programming Languages",
-    "Machine Learning",
-    "Data Science",
-    "Debuggers"
+    "Other"
   ],
   "keywords": [
     "security",
+    "secrets",
+    "linter",
     "clipboard",
     "paste",
-    "secrets",
     "scanner",
     "api keys",
     "credentials",
@@ -219,7 +216,7 @@
           "markdownDescription": "Custom user-defined regex patterns with severity levels. Each pattern must have a unique name, valid regex, and severity.",
           "scope": "application"
         },
-        "pasteShield.secretManagerProvider": {
+"pasteShield.secretManagerProvider": {
           "type": "string",
           "default": "none",
           "enum": [
@@ -230,13 +227,13 @@
             "gcp"
           ],
           "enumDescriptions": [
-            "No secret manager configured",
-            "HashiCorp Vault",
-            "AWS Secrets Manager",
-            "Azure Key Vault",
-            "Google Secret Manager"
+            "No secret manager configured — detected secrets are stored in VS Code SecretStorage (OS keychain)",
+            "HashiCorp Vault — credentials are stored securely via VS Code SecretStorage",
+            "AWS Secrets Manager — credentials are stored securely via VS Code SecretStorage",
+            "Azure Key Vault — credentials are stored securely via VS Code SecretStorage",
+            "Google Secret Manager — credentials are stored securely via VS Code SecretStorage"
           ],
-          "description": "Select the secret management provider for storing detected secrets securely.",
+          "description": "Select the secret management provider. All provider credentials are stored via VS Code SecretStorage (OS-level keychain) — never in settings.json.",
           "scope": "application"
         },
         "pasteShield.vaultUrl": {
@@ -245,28 +242,10 @@
           "description": "HashiCorp Vault server URL (e.g., https://vault.example.com:8200)",
           "scope": "application"
         },
-        "pasteShield.vaultToken": {
-          "type": "string",
-          "default": "",
-          "description": "Vault authentication token",
-          "scope": "application"
-        },
         "pasteShield.awsRegion": {
           "type": "string",
           "default": "us-east-1",
           "description": "AWS region for Secrets Manager",
-          "scope": "application"
-        },
-        "pasteShield.awsAccessKeyId": {
-          "type": "string",
-          "default": "",
-          "description": "AWS Access Key ID for Secrets Manager access",
-          "scope": "application"
-        },
-        "pasteShield.awsSecretAccessKey": {
-          "type": "string",
-          "default": "",
-          "description": "AWS Secret Access Key for Secrets Manager access",
           "scope": "application"
         },
         "pasteShield.azureVaultUrl": {
@@ -275,34 +254,10 @@
           "description": "Azure Key Vault URL (e.g., https://myvault.vault.azure.net/)",
           "scope": "application"
         },
-        "pasteShield.azureTenantId": {
-          "type": "string",
-          "default": "",
-          "description": "Azure AD Tenant ID",
-          "scope": "application"
-        },
-        "pasteShield.azureClientId": {
-          "type": "string",
-          "default": "",
-          "description": "Azure Service Principal Client ID",
-          "scope": "application"
-        },
-        "pasteShield.azureClientSecret": {
-          "type": "string",
-          "default": "",
-          "description": "Azure Service Principal Client Secret",
-          "scope": "application"
-        },
         "pasteShield.gcpProjectId": {
           "type": "string",
           "default": "",
           "description": "Google Cloud Project ID for Secret Manager",
-          "scope": "application"
-        },
-        "pasteShield.gcpCredentials": {
-          "type": "string",
-          "default": "",
-          "description": "Google Cloud service account credentials (JSON)",
           "scope": "application"
         },
         "pasteShield.enterpriseMode": {

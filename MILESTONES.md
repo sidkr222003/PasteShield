@@ -2,22 +2,26 @@
 
 Planned features and improvements for future releases.
 
-
-## v1.7.0 — Custom Patterns & Ignore Management (COMPLETED)
-- [x] Fixed and reduced the size of package more
-- [x] optimized the code more
-  
 ---
 
-## v1.5.0 — Custom Patterns & Ignore Management (COMPLETED)
+## v1.7.0 — Pattern Expansion & SecretStorage Hardening (COMPLETED)
 
-- [x] Custom user-defined patterns via settings (regex + severity)
-- [x] Workspace-level ignore list separate from user-level (`.pasteshieldignore`)
-- [x] Integration with `.gitignore`-style pattern files
-- [x] Pattern management UI: add, edit, toggle, remove, import, export
-- [x] Invalid regex validation with user-friendly error messages
-- [x] File system watchers for `.pasteshieldignore` and `.gitignore` auto-refresh
-- [x] Integration with secret management tools (Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager)
+- [x] Expanded to ~200 patterns across 25+ categories
+  - New: Mobile / IoT, Search & Data, Storage & CDN, Maps & Geo
+  - New AI providers: xAI/Grok, DeepSeek, Together AI, Voyage, Fireworks, Cerebras, Fal.ai, Modal, Baseten
+  - New infrastructure, databases, monitoring, auth, crypto, social APIs, package registries
+  - Enhanced PII: Canadian SIN, passport numbers
+- [x] Migrated provider credentials from plaintext `settings.json` to VS Code `SecretStorage` (OS keychain)
+- [x] Removed plaintext credential settings from `package.json` manifest
+- [x] Fixed marketplace category to `Other` only
+- [x] Added `linter` keyword for discoverability
+- [x] Reduced package size and optimized code
+
+---
+
+## v1.6.0 — Enterprise & History (COMPLETED)
+
+- [x] Integration with secret management tools (Vault, AWS, Azure, GCP)
 - [x] Store, retrieve, rotate, list, and delete detected secrets
 - [x] Quick-store action prompted after detection
 - [x] Secret rotation reminders for detected credentials
@@ -33,22 +37,23 @@ Planned features and improvements for future releases.
 - [x] Sidebar history view with GitHub-style codeicons
 - [x] Real-time history updates when keys are pasted anywhere
 - [x] Enhanced visual hierarchy with severity-based icons and colors
-- [x] Command registration for all history-related actions:
-  - `pasteShield.refreshHistory` — Refresh the history view
-  - `pasteShield.clearHistory` — Clear all scan history
-  - `pasteShield.exportHistoryJson` — Export history as JSON file
-  - `pasteShield.exportHistoryText` — Export history as plain text file
-  - `pasteShield.showDetectionDetails` — Show details for individual detections
-- [x] Improved empty state with helpful messaging
-- [x] Configuration options for history tracking:
-  - `pasteShield.enableHistory` — Enable/disable history tracking (default: true)
-  - `pasteShield.autoRefreshHistory` — Auto-refresh on new scans (default: true)
+- [x] Command registration for all history-related actions
+- [x] Configuration options for history tracking
 - [x] Status bar item showing PasteShield enabled/disabled state
-- [x] "Always allow this pattern" quick action from the warning dialog (via CodeLens ignore)
+- [x] "Always allow this pattern" quick action from the warning dialog
 - [x] Inline paste-point decorations with theme-aware colors
 - [x] Debounced CodeLens refresh and decoration pruning for performance
-- [ ] Notification sound option for critical-severity detections
-- [ ] Configurable warning dialog timeout (auto-dismiss after N seconds)
+
+---
+
+## v1.5.0 — Custom Patterns & Ignore Management (COMPLETED)
+
+- [x] Custom user-defined patterns via settings (regex + severity)
+- [x] Workspace-level ignore list separate from user-level (`.pasteshieldignore`)
+- [x] Integration with `.gitignore`-style pattern files
+- [x] Pattern management UI: add, edit, toggle, remove, import, export
+- [x] Invalid regex validation with user-friendly error messages
+- [x] File system watchers for `.pasteshieldignore` and `.gitignore` auto-refresh
 
 ---
 
@@ -80,7 +85,6 @@ Planned features and improvements for future releases.
 - [ ] SARIF output format for integration with GitHub Advanced Security
 - [ ] Baseline mode (ignore existing secrets in repo, flag only new ones)
 - [ ] Integration with 1Password / Bitwarden secret references
-- [ ] Offline mode with fully local encryption (no external secret manager)
 - [ ] Custom severity override per workspace
 - [ ] Pattern marketplace / community pattern sharing
 
