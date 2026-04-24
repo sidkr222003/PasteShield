@@ -21,9 +21,6 @@ Detects secrets, unsafe patterns, and vulnerabilities *before* they land in your
 
 PasteShield intercepts every paste (`Ctrl+V` / `Cmd+V`) in the editor and scans the clipboard content for dangerous patterns — API keys, hardcoded passwords, unsafe JavaScript, prototype pollution, and more — before the text ever reaches your file.
 
-<div align="center">
-  <img src="resources/codelens.gif" alt="PasteShield in action" width="700"/>
-</div>
 
 ---
 
@@ -35,10 +32,8 @@ Every `Ctrl+V` / `Cmd+V` is scanned instantly. If a risk is detected you get a c
 ### 🛡️ Inline CodeLens warnings
 PasteShield also scans already-open files and surfaces CodeLens annotations directly above risky lines. Each lens shows the severity and provides one-click actions: view details, ignore the pattern, or open settings.
 
-> **Replace the GIF below with a screen recording of CodeLens annotations.**
-
 <div align="center">
-  <img src="resources/codelens-demo.gif" alt="CodeLens warnings" width="700"/>
+  <img src="resources/codelens.gif" alt="PasteShield in action" width="600"/>
 </div>
 
 ### 🎯 Severity levels
