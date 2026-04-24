@@ -25,10 +25,6 @@ PasteShield intercepts every paste (`Ctrl+V` / `Cmd+V`) in the editor and scans 
   <img src="resources/codelens.gif" alt="PasteShield in action" width="700"/>
 </div>
 
-<div align="center">
-  <img src="resources/full.gif" alt="PasteShield in action" width="700"/>
-</div>
-
 ---
 
 ## Features
