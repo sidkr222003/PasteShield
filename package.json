@@ -1,7 +1,7 @@
 {
   "name": "pasteshield",
   "displayName": "PasteShield",
-  "description": "Intercepts secrets before they land in your file — 100+ patterns, 100% offline.",
+  "description": "Intercepts secrets before they land in your file \u2014 100+ patterns, 100% offline.",
   "version": "1.6.0",
   "publisher": "NK2552003",
   "icon": "resources/icon.png",
@@ -100,7 +100,7 @@
           "enumDescriptions": [
             "Only warn for critical issues (API keys, private keys, database credentials).",
             "Warn for high and critical issues (adds JWTs, hardcoded passwords, prototype pollution).",
-            "Warn for medium, high, and critical issues — recommended (adds eval, innerHTML, document.write).",
+            "Warn for medium, high, and critical issues \u2014 recommended (adds eval, innerHTML, document.write).",
             "Warn for all detected patterns including low-severity ones (adds setTimeout/setInterval strings)."
           ],
           "description": "Minimum severity level that triggers a PasteShield warning.",
