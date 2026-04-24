@@ -1,0 +1,164 @@
+{
+  "name": "pasteshield",
+  "displayName": "PasteShield",
+  "description": "Clipboard security scanner for VS Code — detects secrets, unsafe patterns, and vulnerabilities before they land in your code.",
+  "version": "1.0.0",
+  "publisher": "NK2552003",
+  "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sidkr222003/pasteshield"
+  },
+  "engines": {
+    "vscode": "^1.93.0"
+  },
+  "categories": ["Other", "Programming Languages"],
+  "keywords": ["security", "clipboard", "paste", "secrets", "scanner"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "package": "npx @vscode/vsce package",
+    "publish": "npx @vscode/vsce publish"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.19.39",
+    "@types/vscode": "^1.93.0",
+    "typescript": "^5.5.0"
+  },
+  "contributes": {
+    "configuration": {
+      "title": "PasteShield",
+      "properties": {
+        "pasteShield.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable PasteShield clipboard scanning.",
+          "scope": "window"
+        },
+        "pasteShield.ignoredPatterns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "markdownDescription": "Pattern names to skip during scanning. Example: `[\"eval() Call\", \"innerHTML Assignment\"]`. Run **PasteShield: Show Last Scan Report** to see all pattern names.",
+          "scope": "resource"
+        },
+        "pasteShield.showInlineDecorations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a temporary inline gutter decoration at the insertion point after a warned paste (auto-clears after 10 seconds).",
+          "scope": "window"
+        },
+        "pasteShield.minimumSeverity": {
+          "type": "string",
+          "default": "medium",
+          "enum": ["critical", "high", "medium", "low"],
+          "enumDescriptions": [
+            "Only warn for critical issues (API keys, private keys, database credentials).",
+            "Warn for high and critical issues (adds JWTs, hardcoded passwords, prototype pollution).",
+            "Warn for medium, high, and critical issues — recommended (adds eval, innerHTML, document.write).",
+            "Warn for all detected patterns including low-severity ones (adds setTimeout/setInterval strings)."
+          ],
+          "description": "Minimum severity level that triggers a PasteShield warning.",
+          "scope": "window"
+        },
+        "pasteShield.ignoredLanguages": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "markdownDescription": "Language IDs where PasteShield paste scanning is disabled. Example: `[\"markdown\", \"plaintext\"]`. Note: `.env` and `.env.local` files are always excluded from paste interception regardless of this setting.",
+          "scope": "resource"
+        },
+        "pasteShield.showCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline CodeLens warnings above detected secrets and unsafe patterns in open files.",
+          "scope": "window"
+        },
+        "pasteShield.codeLensExcludedFiles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "markdownDescription": "Additional file basenames to exclude from CodeLens scanning (e.g. `[\".env.production\"]`).",
+          "scope": "resource"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "pasteShield.paste",
+        "title": "Paste (with security scan)",
+        "category": "PasteShield",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "pasteShield.toggle",
+        "title": "Toggle On/Off",
+        "category": "PasteShield",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "pasteShield.showLastReport",
+        "title": "Show Last Scan Report",
+        "category": "PasteShield",
+        "icon": "$(output)"
+      },
+      {
+        "command": "pasteShield.codeLensDetails",
+        "title": "Show Detection Details",
+        "category": "PasteShield",
+        "icon": "$(info)"
+      },
+      {
+        "command": "pasteShield.codeLensIgnore",
+        "title": "Ignore This Pattern",
+        "category": "PasteShield",
+        "icon": "$(mute)"
+      },
+      {
+        "command": "pasteShield.codeLensFix",
+        "title": "Open Ignored Patterns Settings",
+        "category": "PasteShield",
+        "icon": "$(settings-gear)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        { "command": "pasteShield.paste", "when": "false" },
+        { "command": "pasteShield.toggle" },
+        { "command": "pasteShield.showLastReport" },
+        { "command": "pasteShield.codeLensDetails", "when": "false" },
+        { "command": "pasteShield.codeLensIgnore", "when": "false" },
+        { "command": "pasteShield.codeLensFix", "when": "false" }
+      ],
+      "editor/context": [
+        {
+          "command": "pasteShield.toggle",
+          "when": "editorTextFocus",
+          "group": "pasteShield@1"
+        },
+        {
+          "command": "pasteShield.showLastReport",
+          "when": "editorTextFocus",
+          "group": "pasteShield@2"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "pasteShield.paste",
+        "key": "ctrl+v",
+        "mac": "cmd+v",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "pasteShield.paste",
+        "key": "shift+insert",
+        "when": "editorTextFocus"
+      }
+    ]
+  }
+}

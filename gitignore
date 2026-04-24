@@ -1,0 +1,22 @@
+# Compiled output
+dist/
+
+# Dependencies
+node_modules/
+
+# Packaged extension
+*.vsix
+
+# VS Code local settings
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/*.log
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
