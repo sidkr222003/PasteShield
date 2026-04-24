@@ -153,7 +153,7 @@ This document provides a detailed explanation of every major module, class, and 
 **File:** `src/features/pasteShield/patternDetector.ts`
 
 ### `scanContent(text, options)`
-- The main scanning function. Iterates over all `PATTERN_DEFINITIONS` (100+ patterns)
+- The main scanning function. Iterates over all `PATTERN_DEFINITIONS` (~200 patterns)
 - Options:
   - `ignoredPatterns` — skips patterns by name
   - `maxResults` — caps results (default 50)
@@ -163,26 +163,30 @@ This document provides a detailed explanation of every major module, class, and 
 - Sorts results by severity: critical → high → medium → low
 
 ### `PATTERN_DEFINITIONS`
-- Pre-compiled array of 100+ regex patterns across 15+ categories:
-  - **AI Providers** — OpenAI, Anthropic, Gemini, Mistral, Cohere, Hugging Face, Replicate, Together, Groq, Perplexity, ElevenLabs, Stability, OpenRouter, Azure OpenAI, LangSmith
-  - **AWS** — Access Key ID, Secret Key, Session Token, Account ID, ARN, S3 Pre-signed URL
-  - **Google Cloud** — Service Account JSON, OAuth Client Secret, Refresh Token, Firebase credentials, GCS Signed URL
-  - **Azure** — Subscription ID, Client Secret, Storage Key, SAS Token, Connection String, Service Bus
-  - **Source Control** — GitHub PAT (classic & fine-grained), OAuth, App, Refresh tokens; GitLab PAT, Trigger, Runner tokens; Bitbucket App Password
-  - **CI/CD** — CircleCI, Travis CI, Jenkins, Vercel, Netlify, Render, Railway, Fly.io
-  - **Communication** — Slack Bot/User/App tokens, Webhook; Discord Bot/Webhook; Telegram; Twilio; SendGrid; Mailchimp; Mailgun; Postmark; Resend; Teams Webhook
-  - **Payments** — Stripe (live/test/publishable/webhook/restricted), PayPal, Razorpay, Braintree, Square, Adyen, Paddle
-  - **Databases** — Generic connection strings, Supabase, PlanetScale, Neon, MongoDB Atlas, Turso, Upstash, Airtable, Pinecone
-  - **Monitoring** — Datadog, Sentry, New Relic, Logflare, Grafana
-  - **Auth & Identity** — Auth0, Clerk, Okta, JWT, NextAuth, Better Auth
-  - **Crypto / Web3** — Ethereum private key, BIP39 mnemonic, Alchemy, Infura, QuickNode
-  - **Infrastructure** — Cloudflare, DigitalOcean, Linode, Terraform Cloud, Vault, Doppler, Pulumi
-  - **Package Registries** — npm, PyPI, RubyGems
-  - **Social APIs** — Twitter/X, Facebook, Instagram, LinkedIn, Shopify, Figma, Notion, Linear
-  - **Keys & Certs** — PEM private keys, SSH keys, PGP keys, certificates
-  - **Generic Secrets** — Hardcoded passwords, API keys, Basic Auth URLs, `.env` contents
-  - **Unsafe Code** — `eval()`, `innerHTML`, `document.write`, React `dangerouslySetInnerHTML`, `setTimeout`/`setInterval` with strings, `Function` constructor, shell exec with user input, Python `subprocess(shell=True)`, `os.system()`, unsafe deserialization, prototype pollution, SQL injection, path traversal, SSRF, disabled TLS, hardcoded crypto keys, weak hashing, `Math.random()` for security
-  - **PII** — US SSN, credit cards, IBAN, Indian Aadhaar/PAN, UK NINO, internal RFC1918 IPs
+- Pre-compiled array of ~200 regex patterns across 25+ categories:
+  - **AI Providers** — OpenAI, Anthropic, Gemini, xAI/Grok, DeepSeek, Mistral, Cohere, Hugging Face, Replicate, Together, Groq, Perplexity, ElevenLabs, OpenRouter, Azure OpenAI, LangSmith, Voyage, Fireworks, Cerebras, Stability, Fal.ai, Modal, Baseten
+  - **AWS** — Access Key ID, Secret Key, Session Token, Account ID, ARN, S3 Pre-signed URL, CodeCommit, ECR
+  - **Google Cloud** — Service Account JSON, OAuth Client Secret, Refresh Token, Firebase credentials, GCS Signed URL, Maps API
+  - **Azure** — Subscription ID, Client Secret, Storage Key, SAS Token, Connection String, Service Bus, Cosmos DB, Event Hub, Tenant ID
+  - **Source Control** — GitHub PAT (classic & fine-grained), OAuth, App, Refresh tokens; GitLab PAT, Trigger, Runner, Deploy tokens; Bitbucket App Password
+  - **CI/CD** — CircleCI, Travis CI, Jenkins, Vercel, Netlify, Render, Railway, Fly.io, Heroku, Buildkite, Drone, Spacelift, Coolify
+  - **Communication** — Slack Bot/User/App/Config tokens, Webhook; Discord Bot/Webhook; Telegram; Twilio; SendGrid; Mailchimp; Mailgun; Postmark; Resend; Teams Webhook; Vonage; Pusher; Plivo; Zulip
+  - **Payments** — Stripe (live/test/publishable/webhook/restricted), PayPal, Razorpay, Braintree, Square, Adyen, Paddle, Mollie, Lemon Squeezy, Checkout.com
+  - **Databases** — Generic connection strings, Supabase, PlanetScale, Neon, MongoDB Atlas, Turso, Upstash, Airtable, Pinecone, Weaviate, Qdrant, Xata, Fauna, CockroachDB, Convex
+  - **Monitoring** — Datadog, Sentry, New Relic, Grafana, Logflare, Honeycomb, Axiom, Better Stack, Rollbar, Bugsnag
+  - **Auth & Identity** — Auth0, Clerk, Okta, JWT, NextAuth, Better Auth, WorkOS, Stytch, Passage
+  - **Crypto / Web3** — Ethereum private key, BIP39 mnemonic, Alchemy, Infura, QuickNode, Moralis, Helius
+  - **Infrastructure** — Cloudflare, DigitalOcean, Linode/Akamai, Terraform Cloud, Vault, Doppler, Pulumi, Infisical, Cloudsmith, Fastly
+  - **Package Registries** — npm, PyPI, RubyGems, JFrog Artifactory, Sonatype Nexus
+  - **Social APIs** — Twitter/X, Facebook, Instagram, LinkedIn, Shopify, Figma, Notion, Linear, Intercom, HubSpot, Zendesk, Salesforce, Asana, Jira, Confluence, WooCommerce, Contentful, Sanity, Vercel Blob
+  - **Keys & Certs** — PEM private keys, OpenSSH keys, PGP keys, certificates, PKCS12
+  - **Generic Secrets** — Hardcoded passwords, API keys, Basic Auth URLs, `.env` contents, Docker registry creds, Authorization headers
+  - **Unsafe Code** — `eval()`, `innerHTML`, `document.write`, React `dangerouslySetInnerHTML`, `setTimeout`/`setInterval` with strings, `Function` constructor, shell exec with user input, Python `subprocess(shell=True)`, `os.system()`, unsafe deserialization, prototype pollution, SQL injection, path traversal, SSRF, disabled TLS, hardcoded crypto keys, weak hashing, `Math.random()` for security, ReDoS, insecure Python random
+  - **PII** — US SSN, credit cards, IBAN, Indian Aadhaar/PAN, UK NINO, Canadian SIN, passport numbers, internal RFC1918 IPs
+  - **Mobile / IoT** — Apple APNs, Google FCM, Expo, AWS IoT, MQTT
+  - **Search & Data** — Algolia, Typesense, Elastic, Meilisearch, Segment, Mixpanel, Amplitude, PostHog
+  - **Storage & CDN** — Cloudinary, Bunny.net, Uploadthing, ImageKit, Backblaze B2, Wasabi
+  - **Maps & Geo** — Mapbox, Google Maps, HERE, TomTom
 
 ### `getLineNumber(text, index)`
 - Calculates 1-indexed line number for a regex match index
@@ -413,33 +417,37 @@ This document provides a detailed explanation of every major module, class, and 
 - Instantiates the correct provider based on `secretManagerProvider` setting
 
 ### `storeDetectedSecret(secretValue, metadata)`
-- Encrypts the secret value with AES-256-CBC (demo encryption)
-- Generates a unique SHA-256 ID
-- Stores in the configured provider
+- Stores the detected secret via VS Code's built-in `SecretStorage` API (OS-level keychain)
+- For external providers, credentials are loaded from SecretStorage and the secret is passed to the provider mock
+- Generates a unique ID
 - Returns the secret ID
 
 ### `getStoredSecret(id)`
-- Retrieves and decrypts a secret by ID
+- Retrieves a secret by ID from the configured provider or VS Code SecretStorage
 
 ### `deleteStoredSecret(id)`
-- Removes a secret from the provider
+- Removes a secret from the provider or VS Code SecretStorage
 
 ### `listStoredSecrets()`
-- Returns all stored secrets (metadata only; values remain encrypted)
+- Returns all stored secrets (metadata only; values remain in SecretStorage)
 
 ### `rotateStoredSecret(id, newValue)`
 - Updates a secret's value while preserving metadata
 
 ### `quickStoreAction(secretValue, metadata)`
 - Prompts the user to store a detected secret immediately after detection
-- If no provider is configured, offers to open settings
+- If no external provider is configured, stores in VS Code SecretStorage (OS keychain)
 
-### `encryptSecret(value)` / `decryptSecret(encryptedValue)`
-- Symmetric AES-256-CBC encryption using a scrypt-derived key
-- **Note:** In production, replace with proper KMS/HSM integration
+### `init()`
+- Loads sensitive provider credentials from VS Code `SecretStorage` (never from `settings.json`)
+- Initializes the correct provider after credentials are available
+
+### `storeCredential(key, value)`
+- Stores a provider credential securely in VS Code `SecretStorage`
+- Triggers provider re-initialization if already loaded
 
 ### `isConfigured()`
-- Returns `true` if a provider other than `none` is selected and initialized
+- Returns `true` if a provider other than `none` is selected in settings
 
 ---
 
@@ -567,18 +575,11 @@ This document provides a detailed explanation of every major module, class, and 
 | `pasteShield.enableHistory` | `boolean` | `true` | Enable scan history tracking |
 | `pasteShield.autoRefreshHistory` | `boolean` | `true` | Auto-refresh history sidebar on new scans |
 | `pasteShield.customPatterns` | `object[]` | `[]` | User-defined regex patterns |
-| `pasteShield.secretManagerProvider` | `string` | `"none"` | Provider: `none`, `vault`, `aws`, `azure`, `gcp` |
-| `pasteShield.vaultUrl` | `string` | — | HashiCorp Vault URL |
-| `pasteShield.vaultToken` | `string` | — | Vault authentication token |
-| `pasteShield.awsRegion` | `string` | — | AWS region |
-| `pasteShield.awsAccessKeyId` | `string` | — | AWS access key |
-| `pasteShield.awsSecretAccessKey` | `string` | — | AWS secret key |
-| `pasteShield.azureVaultUrl` | `string` | — | Azure Key Vault URL |
-| `pasteShield.azureTenantId` | `string` | — | Azure tenant ID |
-| `pasteShield.azureClientId` | `string` | — | Azure client ID |
-| `pasteShield.azureClientSecret` | `string` | — | Azure client secret |
-| `pasteShield.gcpProjectId` | `string` | — | GCP project ID |
-| `pasteShield.gcpCredentials` | `string` | — | GCP service account JSON |
+| `pasteShield.secretManagerProvider` | `string` | `"none"` | Provider: `none`, `vault`, `aws`, `azure`, `gcp`. Credentials stored via SecretStorage. |
+| `pasteShield.vaultUrl` | `string` | — | HashiCorp Vault URL (non-sensitive) |
+| `pasteShield.awsRegion` | `string` | — | AWS region (non-sensitive) |
+| `pasteShield.azureVaultUrl` | `string` | — | Azure Key Vault URL (non-sensitive) |
+| `pasteShield.gcpProjectId` | `string` | — | GCP project ID (non-sensitive) |
 | `pasteShield.enterpriseMode` | `boolean` | `false` | Enable enterprise policy enforcement |
 | `pasteShield.teamMembers` | `object[]` | `[]` | Team members for enterprise |
 | `pasteShield.enableAuditLogging` | `boolean` | `true` | Enable audit log generation |
@@ -633,7 +634,7 @@ User Paste (Ctrl+V)
 
 - **Clipboard data never leaves the machine** — all scanning is local
 - **History is stored in VS Code `globalState`** — cleared when VS Code is uninstalled
-- **Secret encryption uses AES-256-CBC** — replace with KMS/HSM for production enterprise use
+- **Secrets and provider credentials are stored via VS Code `SecretStorage`** — delegates to OS-level keychain (Windows Credential Manager, macOS Keychain, Linux libsecret). No custom encryption, no plaintext credentials in settings.
 - **Audit logs are in-memory / exported manually** — no automatic remote transmission
 - **`.env` files are excluded from paste interception** by design (secrets are intentional there)
 - **CodeLens still runs on `.env` files** so existing secrets are visible

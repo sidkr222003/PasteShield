@@ -83,12 +83,13 @@ This document covers how to test PasteShield features manually and describes the
 
 | Test Case | Steps | Expected Result |
 |---|---|---|
-| Configure provider | Run "PasteShield: Configure Secret Manager" → select Vault/AWS/Azure/GCP | Provider setting is updated |
-| Store secret | After detection, choose "Store" in quick-store prompt | Secret is encrypted and stored; ID returned |
+| Configure provider | Run "PasteShield: Configure Secret Manager" → select Vault/AWS/Azure/GCP | Provider setting is updated; password prompts appear for credentials |
+| Credential storage | Enter credentials during configuration | Credentials are stored in VS Code SecretStorage; never written to `settings.json` |
+| Store secret | After detection, choose "Store" in quick-store prompt | Secret is stored via VS Code SecretStorage (OS keychain); ID returned |
 | List secrets | Run "PasteShield: List Stored Secrets" | QuickPick shows all stored secrets |
 | View details | Select a secret → "View Details" | Modal shows metadata (type, detected date, stored date) |
-| Rotate secret | Select a secret → "Rotate" → enter new value | Secret value is updated |
-| Delete secret | Select a secret → "Delete" → confirm | Secret is removed |
+| Rotate secret | Select a secret → "Rotate" → enter new value | Secret value is updated in SecretStorage |
+| Delete secret | Select a secret → "Delete" → confirm | Secret is removed from SecretStorage |
 | Not configured warning | List secrets without configuration | Warning offers to configure |
 
 ### Enterprise Policy

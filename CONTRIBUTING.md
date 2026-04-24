@@ -94,7 +94,7 @@ pasteshield/
 └── README.md
 ```
 
-The core logic lives in `patternDetector.ts`. If you want to add a new detection pattern, that is the only file you need to touch.
+The core logic lives in `patternDetector.ts`, which contains ~200 patterns across 25+ categories. If you want to add a new detection pattern, that is the only file you need to touch.
 
 ---
 

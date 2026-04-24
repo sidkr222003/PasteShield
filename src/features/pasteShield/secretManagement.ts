@@ -240,12 +240,12 @@ export class SecretManagementIntegration {
   private provider: SecretProvider | null = null;
   private config: SecretManagerConfig | null = null;
   private secretStorage: vscode.SecretStorage;
+  private credentialsLoaded: boolean = false;
 
   private constructor(context: vscode.ExtensionContext) {
     this.context = context;
     this.secretStorage = context.secrets;
-    this.loadConfiguration();
-    this.initializeProvider();
+    this.loadNonSensitiveConfiguration();
   }
 
   public static getInstance(context: vscode.ExtensionContext): SecretManagementIntegration {
@@ -255,22 +255,74 @@ export class SecretManagementIntegration {
     return SecretManagementIntegration.instance;
   }
 
-  private loadConfiguration(): void {
+  /**
+   * Initialize credentials from SecretStorage. Must be awaited before using provider features.
+   */
+  public async init(): Promise<void> {
+    if (this.credentialsLoaded) return;
+    await this.loadCredentialsFromSecretStorage();
+    this.initializeProvider();
+    this.credentialsLoaded = true;
+  }
+
+  private loadNonSensitiveConfiguration(): void {
     const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
     this.config = {
       provider: config.get<'vault' | 'aws' | 'azure' | 'gcp' | 'none'>('secretManagerProvider', 'none'),
       vaultUrl: config.get<string>('vaultUrl'),
-      vaultToken: config.get<string>('vaultToken'),
       awsRegion: config.get<string>('awsRegion'),
-      awsAccessKeyId: config.get<string>('awsAccessKeyId'),
-      awsSecretAccessKey: config.get<string>('awsSecretAccessKey'),
       azureVaultUrl: config.get<string>('azureVaultUrl'),
-      azureTenantId: config.get<string>('azureTenantId'),
-      azureClientId: config.get<string>('azureClientId'),
-      azureClientSecret: config.get<string>('azureClientSecret'),
       gcpProjectId: config.get<string>('gcpProjectId'),
-      gcpCredentials: config.get<string>('gcpCredentials'),
     };
+  }
+
+  /**
+   * Load sensitive credentials from VS Code SecretStorage (OS-level keychain).
+   * Never reads credentials from settings.json.
+   */
+  private async loadCredentialsFromSecretStorage(): Promise<void> {
+    if (!this.config) return;
+
+    const [
+      vaultToken,
+      awsAccessKeyId,
+      awsSecretAccessKey,
+      azureTenantId,
+      azureClientId,
+      azureClientSecret,
+      gcpCredentials,
+    ] = await Promise.all([
+      this.secretStorage.get('pasteshield.vaultToken'),
+      this.secretStorage.get('pasteshield.awsAccessKeyId'),
+      this.secretStorage.get('pasteshield.awsSecretAccessKey'),
+      this.secretStorage.get('pasteshield.azureTenantId'),
+      this.secretStorage.get('pasteshield.azureClientId'),
+      this.secretStorage.get('pasteshield.azureClientSecret'),
+      this.secretStorage.get('pasteshield.gcpCredentials'),
+    ]);
+
+    this.config = {
+      ...this.config,
+      vaultToken: vaultToken || undefined,
+      awsAccessKeyId: awsAccessKeyId || undefined,
+      awsSecretAccessKey: awsSecretAccessKey || undefined,
+      azureTenantId: azureTenantId || undefined,
+      azureClientId: azureClientId || undefined,
+      azureClientSecret: azureClientSecret || undefined,
+      gcpCredentials: gcpCredentials || undefined,
+    };
+  }
+
+  /**
+   * Store a provider credential securely in VS Code SecretStorage.
+   */
+  public async storeCredential(key: string, value: string): Promise<void> {
+    await this.secretStorage.store(`pasteshield.${key}`, value);
+    // Refresh provider if already initialized
+    if (this.credentialsLoaded) {
+      await this.loadCredentialsFromSecretStorage();
+      this.initializeProvider();
+    }
   }
 
   private initializeProvider(): void {
@@ -306,6 +358,7 @@ export class SecretManagementIntegration {
       filePath?: string;
     }
   ): Promise<string | null> {
+    await this.init();
     if (!this.provider) {
       // Use VS Code SecretStorage as default (OS-level keychain)
       return this.storeInSecretStorage(secretValue, metadata);
@@ -390,6 +443,7 @@ export class SecretManagementIntegration {
    * Retrieve a stored secret by ID
    */
   public async getStoredSecret(id: string): Promise<string | null> {
+    await this.init();
     if (!this.provider) {
       // Try to retrieve from VS Code SecretStorage
       return this.getFromSecretStorage(id);
@@ -438,6 +492,7 @@ export class SecretManagementIntegration {
    * Delete a stored secret
    */
   public async deleteStoredSecret(id: string): Promise<boolean> {
+    await this.init();
     if (!this.provider) {
       // Delete from VS Code SecretStorage
       return this.deleteFromSecretStorage(id);
@@ -476,6 +531,7 @@ export class SecretManagementIntegration {
    * List all stored secrets (from external providers only)
    */
   public async listStoredSecrets(): Promise<StoredSecret[]> {
+    await this.init();
     if (!this.provider) {
       // List from VS Code SecretStorage
       return this.listFromSecretStorage();
@@ -507,6 +563,7 @@ export class SecretManagementIntegration {
    * Rotate a stored secret with a new value
    */
   public async rotateStoredSecret(id: string, newValue: string): Promise<boolean> {
+    await this.init();
     if (!this.provider) {
       // Rotate in VS Code SecretStorage
       return this.rotateInSecretStorage(id, newValue);
@@ -565,6 +622,7 @@ export class SecretManagementIntegration {
       filePath?: string;
     }
   ): Promise<void> {
+    await this.init();
     const choice = await vscode.window.showInformationMessage(
       `Store this ${metadata.type} securely in ${!this.provider ? 'VS Code SecretStorage (OS keychain)' : this.config?.provider.toUpperCase() + '?'}?`,
       'Store',
@@ -591,15 +649,16 @@ export class SecretManagementIntegration {
    * Reconfigure the secret manager
    */
   public reconfigure(): void {
-    this.loadConfiguration();
-    this.initializeProvider();
+    this.credentialsLoaded = false;
+    this.loadNonSensitiveConfiguration();
+    this.provider = null;
   }
 
   /**
    * Check if secret management is configured
    */
   public isConfigured(): boolean {
-    return this.provider !== null;
+    return this.config?.provider !== 'none' && this.config?.provider !== undefined;
   }
 
   /**

@@ -4,7 +4,7 @@
 
 # PasteShield
 
-**Intercepts secrets before they land in your file — 100+ patterns, 100% offline.**
+**Intercepts secrets before they land in your file — ~200 patterns, 100% offline.**
 
 [![Version](https://img.shields.io/visual-studio-marketplace/v/NK2552003.pasteshield?color=2563eb&label=version&style=flat-square)](https://marketplace.visualstudio.com/items?itemName=NK2552003.pasteshield)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/NK2552003.pasteshield?color=22c55e&style=flat-square)](https://marketplace.visualstudio.com/items?itemName=NK2552003.pasteshield)
@@ -23,7 +23,7 @@ PasteShield intercepts every paste (`Ctrl+V` / `Cmd+V`) in the editor and scans 
   <img src="https://raw.githubusercontent.com/sidkr222003/pasteshield/main/resources/demo.gif" alt="PasteShield paste interception demo" width="700"/>
 </div>
 
-It works entirely offline, using a high-performance regex engine that evaluates **100+ pre-compiled patterns** across **15 categories** in under 50 ms. Detected threats are surfaced through inline warnings, CodeLens annotations, a persistent history sidebar, and an ASCII statistics dashboard.
+It works entirely offline, using a high-performance regex engine that evaluates **~200 pre-compiled patterns** across **25+ categories** in under 50 ms. Detected threats are surfaced through inline warnings, CodeLens annotations, a persistent history sidebar, and an ASCII statistics dashboard.
 
 ### Why PasteShield vs Gitleaks?
 
@@ -105,7 +105,7 @@ Export a JSON audit trail of all scans, detections, and actions taken for compli
 ## How It Works
 
 1. **Paste interception** — PasteShield overrides the default paste keybinding and reads the clipboard before any text enters the document.
-2. **Pattern scanning** — The clipboard is matched against 100+ pre-compiled regexes grouped into 15 categories (AI providers, cloud platforms, CI/CD, databases, PII, unsafe code, etc.).
+2. **Pattern scanning** — The clipboard is matched against ~200 pre-compiled regexes grouped into 25+ categories (AI providers, cloud platforms, CI/CD, databases, PII, unsafe code, mobile/IoT, infrastructure, and more).
 3. **Severity filtering** — Results are filtered by your configured `minimumSeverity`.
 4. **User decision** — If threats are found, a non-blocking warning offers: **Paste Anyway**, **Show Details**, or **Cancel**.
 5. **Post-paste actions** — On paste, optional inline decorations mark the insertion point. CodeLens scans the file to surface existing secrets. A history entry is recorded.
@@ -125,7 +125,7 @@ Export a JSON audit trail of all scans, detections, and actions taken for compli
 **From a `.vsix` file:**
 
 ```bash
-code --install-extension pasteshield-1.0.0.vsix
+code --install-extension pasteshield-1.7.0.vsix
 ```
 
 Or drag-and-drop the `.vsix` into the Extensions panel.
@@ -217,29 +217,20 @@ All settings are available under **Settings → PasteShield** or in your `settin
 
 ### Secret management
 
+PasteShield stores detected secrets using **VS Code's built-in SecretStorage API** (OS-level keychain: Windows Credential Manager, macOS Keychain, or Linux libsecret). No custom encryption is used — secrets are handled by the operating system's native security primitives.
+
+For external providers (Vault, AWS, Azure, GCP), credentials are collected securely via password prompts and stored in SecretStorage. They **never appear in `settings.json`**.
+
 ```jsonc
 {
   // Provider: "none" | "vault" | "aws" | "azure" | "gcp"
   "pasteShield.secretManagerProvider": "none",
 
-  // HashiCorp Vault
+  // Non-sensitive provider config (stored in settings)
   "pasteShield.vaultUrl": "http://localhost:8200",
-  "pasteShield.vaultToken": "",
-
-  // AWS Secrets Manager
   "pasteShield.awsRegion": "us-east-1",
-  "pasteShield.awsAccessKeyId": "",
-  "pasteShield.awsSecretAccessKey": "",
-
-  // Azure Key Vault
   "pasteShield.azureVaultUrl": "",
-  "pasteShield.azureTenantId": "",
-  "pasteShield.azureClientId": "",
-  "pasteShield.azureClientSecret": "",
-
-  // Google Secret Manager
-  "pasteShield.gcpProjectId": "",
-  "pasteShield.gcpCredentials": ""
+  "pasteShield.gcpProjectId": ""
 }
 ```
 
@@ -346,7 +337,11 @@ PasteShield detects patterns across the following categories:
 | **Keys & Certs** | PEM private keys, SSH keys, PGP keys |
 | **Generic Secrets** | Hardcoded passwords, API keys, Basic Auth URLs, `.env` contents |
 | **Unsafe Code** | `eval()`, `innerHTML`, prototype pollution, SQL injection, SSRF |
-| **PII** | US SSN, credit cards, IBAN, Aadhaar, PAN, UK NINO |
+| **PII** | US SSN, credit cards, IBAN, Aadhaar, PAN, UK NINO, passport numbers |
+| **Mobile / IoT** | Apple Push Notifications, Firebase FCM, Expo, MQTT, AWS IoT |
+| **Search & Data** | Algolia, Typesense, Elastic, Meilisearch, Segment, Mixpanel, PostHog |
+| **Storage & CDN** | Cloudinary, Bunny.net, Uploadthing, ImageKit, Backblaze B2, Wasabi |
+| **Maps & Geo** | Mapbox, Google Maps, HERE, TomTom |
 
 ---
 
@@ -356,7 +351,7 @@ PasteShield runs **entirely offline**. Clipboard content is never sent to any se
 
 - **Scanning** — All regex matching happens locally in the extension host
 - **History** — Stored in VS Code's `globalState` (persists across restarts, cleared on uninstall)
-- **Secrets** — Encrypted using VS Code's built-in `SecretStorage` API (OS-level keychain access, enterprise-credible)
+- **Secrets** — Stored via VS Code's built-in `SecretStorage` API (OS-level keychain: Windows Credential Manager, macOS Keychain, Linux libsecret). Enterprise-credible: no custom encryption, no plaintext credentials in settings.
 - **Audit logs** — Exported manually as JSON; no automatic remote transmission
 - **`.env` files** — Excluded from paste interception by design (secrets are intentional there), but CodeLens still scans them
 

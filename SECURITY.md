@@ -35,6 +35,10 @@ The following are **out of scope**:
 - Vulnerabilities in VS Code itself — report those to [Microsoft](https://github.com/microsoft/vscode/security)
 - Patterns that are low-risk by design (use the `minimumSeverity` setting to control these)
 
-## Privacy Note
+## Privacy & Credential Safety
 
-PasteShield processes clipboard content **entirely locally**. No clipboard data is ever transmitted to any external server. If you believe this guarantee is violated by any version of this extension, that is a critical security issue and should be reported immediately.
+PasteShield processes clipboard content **entirely locally**. No clipboard data is ever transmitted to any external server.
+
+Provider credentials (Vault tokens, AWS keys, Azure secrets, GCP credentials) are **never stored in `settings.json`**. They are collected via secure password prompts and stored via VS Code's `SecretStorage` API, which delegates to the OS-level keychain (Windows Credential Manager, macOS Keychain, or Linux libsecret).
+
+If you believe either guarantee is violated by any version of this extension, that is a critical security issue and should be reported immediately.
