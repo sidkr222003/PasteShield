@@ -549,6 +549,29 @@ async function handlePaste(): Promise<void> {
   // Persist report for "Show Details" / status bar command
   lastReport = filtered;
 
+  // Silent mode: log to history without blocking paste
+  if (config.silentMode) {
+    logger.info(`PasteShield: silent mode - logged ${filtered.length} issue(s) to history`);
+    
+    // Add to history silently
+    if (historyManager) {
+      await historyManager.addEntry({
+        fileName: editor.document.fileName,
+        detections: filtered.map(d => ({ type: d.type, severity: d.severity, category: d.category })),
+        actionTaken: 'pasted_silent',
+      });
+      historyViewProvider?.refresh();
+    }
+    
+    // Still paste the content without blocking
+    const insertRange = await insertText(editor, clipboardText);
+    if (insertRange && config.showInlineDecorations) {
+      applyDecoration(editor, insertRange, filtered[0].severity);
+    }
+    debouncedRefreshCodeLens();
+    return;
+  }
+
   // Build warning
   const topSeverity = filtered[0].severity; // already sorted by severity
 
@@ -558,6 +581,7 @@ async function handlePaste(): Promise<void> {
     `PasteShield: ${summary}`,
     'Paste Anyway',
     'Show Details',
+    'Report False Positive',
     'Cancel',
   );
 
@@ -579,6 +603,18 @@ async function handlePaste(): Promise<void> {
       });
       historyViewProvider?.refresh();
     }
+    return;
+  }
+
+  if (choice === 'Report False Positive') {
+    await reportFalsePositive(filtered, ignorePatternsManager);
+    // After reporting, paste the content
+    const insertRange = await insertText(editor, clipboardText);
+    if (insertRange && config.showInlineDecorations) {
+      applyDecoration(editor, insertRange, topSeverity);
+    }
+    debouncedRefreshCodeLens();
+    logger.info('PasteShield: false positive reported and pasted');
     return;
   }
 
