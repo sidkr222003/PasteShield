@@ -230,7 +230,7 @@ export class IgnorePatternsManager {
       
       const content = fs.readFileSync(ignoreFilePath, 'utf-8');
       const lines = content.split('\n');
-      const newLines = lines.filter(line => line.trim() !== pattern);
+      const newLines = lines.filter((line: string) => line.trim() !== pattern);
       
       fs.writeFileSync(ignoreFilePath, newLines.join('\n'), 'utf-8');
       this.loadWorkspacePatterns(); // Reload patterns

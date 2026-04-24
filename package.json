@@ -2,7 +2,7 @@
   "name": "pasteshield",
   "displayName": "PasteShield",
   "description": "Clipboard security scanner for VS Code — detects secrets, unsafe patterns, and vulnerabilities before they land in your code.",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "publisher": "NK2552003",
   "icon": "resources/icon.png",
   "repository": {
@@ -14,14 +14,28 @@
   },
   "categories": [
     "Other",
-    "Programming Languages"
+    "Programming Languages",
+    "Machine Learning",
+    "Data Science",
+    "Debuggers"
   ],
   "keywords": [
     "security",
     "clipboard",
     "paste",
     "secrets",
-    "scanner"
+    "scanner",
+    "api keys",
+    "credentials",
+    "enterprise",
+    "policy",
+    "compliance",
+    "audit",
+    "history",
+    "secret management",
+    "custom patterns",
+    "pii",
+    "vulnerability"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -39,6 +53,7 @@
   },
   "devDependencies": {
     "@types/minimatch": "^5.1.2",
+    "@types/node": "^25.6.0",
     "@types/vscode": "^1.93.0",
     "typescript": "^5.5.0"
   },
@@ -346,6 +361,12 @@
         "icon": "$(output)"
       },
       {
+        "command": "pasteShield.showHistory",
+        "title": "Show History",
+        "category": "PasteShield",
+        "icon": "$(history)"
+      },
+      {
         "command": "pasteShield.codeLensDetails",
         "title": "Show Detection Details",
         "category": "PasteShield",
@@ -449,6 +470,46 @@
       }
     ],
     "menus": {
+      "editor/context": [
+        {
+          "submenu": "pasteShield.editorMenu",
+          "group": "9_cutcopypaste@5"
+        }
+      ],
+      "pasteShield.editorMenu": [
+        {
+          "command": "pasteShield.paste",
+          "group": "1_paste@1"
+        },
+        {
+          "command": "pasteShield.toggle",
+          "group": "2_actions@1"
+        },
+        {
+          "command": "pasteShield.showLastReport",
+          "group": "2_actions@2"
+        },
+        {
+          "command": "pasteShield.showHistory",
+          "group": "2_actions@3"
+        },
+        {
+          "command": "pasteShield.showStatistics",
+          "group": "3_analysis@1"
+        },
+        {
+          "command": "pasteShield.manageCustomPatterns",
+          "group": "4_advanced@1"
+        },
+        {
+          "command": "pasteShield.configureSecretManager",
+          "group": "4_advanced@2"
+        },
+        {
+          "command": "pasteShield.showEnterprisePolicy",
+          "group": "4_advanced@3"
+        }
+      ],
       "view/title": [
         {
           "command": "pasteShield.refreshHistory",
@@ -479,6 +540,13 @@
         }
       ]
     },
+    "submenus": [
+      {
+        "id": "pasteShield.editorMenu",
+        "label": "PasteShield",
+        "icon": "$(shield)"
+      }
+    ],
     "keybindings": [
       {
         "command": "pasteShield.paste",
