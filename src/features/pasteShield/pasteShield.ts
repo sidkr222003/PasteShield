@@ -846,6 +846,53 @@ async function addToIgnoredPatterns(patternName: string): Promise<void> {
 }
 
 /**
+ * Reports a false positive by adding detected patterns to the ignored list.
+ */
+async function reportFalsePositive(
+  detections: DetectionResult[],
+  ignorePatternsManager?: IgnorePatternsManager,
+): Promise<void> {
+  if (detections.length === 0) {
+    return;
+  }
+
+  // Get unique pattern types from detections
+  const patternTypes = [...new Set(detections.map(d => d.type))];
+  
+  if (patternTypes.length === 1) {
+    // Single pattern type - add it directly
+    const patternName = patternTypes[0];
+    if (ignorePatternsManager) {
+      await ignorePatternsManager.addToWorkspaceIgnore(patternName);
+    } else {
+      await addToIgnoredPatterns(patternName);
+    }
+  } else {
+    // Multiple pattern types - let user choose which to ignore
+    const selected = await vscode.window.showQuickPick(
+      patternTypes.map(p => ({ label: p, description: 'Add to ignored patterns' })),
+      {
+        placeHolder: 'Select patterns to mark as false positives',
+        canPickMany: true,
+      }
+    );
+
+    if (selected && selected.length > 0) {
+      for (const item of selected) {
+        if (ignorePatternsManager) {
+          await ignorePatternsManager.addToWorkspaceIgnore(item.label);
+        } else {
+          await addToIgnoredPatterns(item.label);
+        }
+      }
+      vscode.window.showInformationMessage(
+        `PasteShield: ${selected.length} pattern(s) marked as false positive(s).`,
+      );
+    }
+  }
+}
+
+/**
  * Applies a short-lived inline decoration at `range` in `editor`.
  * Auto-clears after 10 seconds.
  */
