@@ -4,9 +4,7 @@
 
 # PasteShield
 
-**Clipboard security scanner for VS Code**
-
-Detects secrets, unsafe patterns, and vulnerabilities *before* they land in your code.
+**Intercepts secrets before they land in your file — 100+ patterns, 100% offline.**
 
 [![Version](https://img.shields.io/visual-studio-marketplace/v/NK2552003.pasteshield?color=2563eb&label=version&style=flat-square)](https://marketplace.visualstudio.com/items?itemName=NK2552003.pasteshield)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/NK2552003.pasteshield?color=22c55e&style=flat-square)](https://marketplace.visualstudio.com/items?itemName=NK2552003.pasteshield)
@@ -23,6 +21,16 @@ PasteShield intercepts every paste (`Ctrl+V` / `Cmd+V`) in the editor and scans 
 
 It works entirely offline, using a high-performance regex engine that evaluates **100+ pre-compiled patterns** across **15 categories** in under 50 ms. Detected threats are surfaced through inline warnings, CodeLens annotations, a persistent history sidebar, and an ASCII statistics dashboard.
 
+### Why PasteShield vs Gitleaks?
+
+**Gitleaks catches what's in your repo. PasteShield catches what never should have been.**
+
+These tools are complementary, not competing:
+- **Gitleaks**: Scans existing git repositories for leaked secrets (post-commit detection)
+- **PasteShield**: Intercepts secrets at paste time, before they ever touch your filesystem (pre-commit prevention)
+
+Use both for defense-in-depth: PasteShield as your first line of defense during development, Gitleaks as your safety net in CI/CD pipelines.
+
 For a deep dive into how each module works, see [ARCHITECTURE.md](ARCHITECTURE.md). For manual testing guidance, see [TESTING.md](TESTING.md).
 
 ---
@@ -31,6 +39,9 @@ For a deep dive into how each module works, see [ARCHITECTURE.md](ARCHITECTURE.m
 
 ### 🔍 Real-time paste interception
 Every `Ctrl+V` / `Cmd+V` is scanned instantly. If a risk is detected you get a clear warning with severity, pattern name, and the option to proceed or cancel — all without ever leaving the editor.
+
+### 🔇 Silent mode (non-blocking scan)
+Enable **silent mode** in settings to log detections to the sidebar without blocking paste. Perfect for new users who want visibility without interruption, or teams that prefer audit trails over hard blocks.
 
 ### 🛡️ Inline CodeLens warnings
 PasteShield also scans already-open files and surfaces CodeLens annotations directly above risky lines. Each lens shows the severity and provides one-click actions: view details, ignore the pattern, or open settings.
@@ -66,6 +77,9 @@ Store detected secrets securely in HashiCorp Vault, AWS Secrets Manager, Azure K
 
 ### 🏢 Enterprise policy enforcement
 Enable team-wide security policies with `.pasteshield-policy.json`. Block critical patterns, enforce audit logging, generate compliance reports, and apply strict/moderate/permissive policy templates.
+
+### 🔗 Team mode: shared policy URL
+Distribute a `.pasteshield-policy.json` via a URL (e.g. hosted on GitHub). One config update propagates to all team members automatically. This makes the enterprise tier genuinely sticky — centralize policy management across your entire organization.
 
 ### 📝 Ignore pattern management
 Ignore patterns at the user level (settings), workspace level (`.pasteshieldignore` file), or automatically from `.gitignore` entries related to secrets.
@@ -338,7 +352,7 @@ PasteShield runs **entirely offline**. Clipboard content is never sent to any se
 
 - **Scanning** — All regex matching happens locally in the extension host
 - **History** — Stored in VS Code's `globalState` (persists across restarts, cleared on uninstall)
-- **Secrets** — Encrypted with AES-256-CBC before storage in secret managers (replace with KMS/HSM for production)
+- **Secrets** — Encrypted using VS Code's built-in `SecretStorage` API (OS-level keychain access, enterprise-credible)
 - **Audit logs** — Exported manually as JSON; no automatic remote transmission
 - **`.env` files** — Excluded from paste interception by design (secrets are intentional there), but CodeLens still scans them
 

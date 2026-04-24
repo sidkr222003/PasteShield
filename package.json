@@ -1,7 +1,7 @@
 {
   "name": "pasteshield",
   "displayName": "PasteShield",
-  "description": "Clipboard security scanner for VS Code — detects secrets, unsafe patterns, and vulnerabilities before they land in your code.",
+  "description": "Intercepts secrets before they land in your file — 100+ patterns, 100% offline.",
   "version": "1.5.0",
   "publisher": "NK2552003",
   "icon": "resources/icon.png",
@@ -65,6 +65,12 @@
           "type": "boolean",
           "default": true,
           "description": "Enable or disable PasteShield clipboard scanning.",
+          "scope": "window"
+        },
+        "pasteShield.silentMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable silent mode: scan clipboard and log to sidebar without blocking paste. Ideal for new users who want visibility without interruption.",
           "scope": "window"
         },
         "pasteShield.ignoredPatterns": {
@@ -303,6 +309,12 @@
           "type": "boolean",
           "default": false,
           "description": "Enable enterprise mode for team-wide policy enforcement",
+          "scope": "machine"
+        },
+        "pasteShield.teamPolicyUrl": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "URL to a shared `.pasteshield-policy.json` file (e.g. hosted on GitHub). Updates propagate to all team members automatically. Enables sticky enterprise tier.",
           "scope": "machine"
         },
         "pasteShield.teamMembers": {
