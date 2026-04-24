@@ -6,19 +6,19 @@ Planned features and improvements for future releases.
 
 ## v1.1.0 — Pattern Expansion
 
-- [ ] Add detection for AWS, GCP, and Azure credential patterns
-- [ ] Add detection for Slack, Stripe, and GitHub tokens
+- [x] Add detection for AWS, GCP, and Azure credential patterns
+- [x] Add detection for Slack, Stripe, and GitHub tokens
 - [ ] Add detection for SSH private key blocks
-- [ ] Add detection for hardcoded connection strings (MongoDB, PostgreSQL, MySQL)
+- [x] Add detection for hardcoded connection strings (MongoDB, PostgreSQL, MySQL)
 
 ---
 
 ## v1.2.0 — UX Improvements
 
-- [ ] Status bar item showing PasteShield enabled/disabled state
+- [x] Status bar item showing PasteShield enabled/disabled state
 - [ ] Notification sound option for critical-severity detections
 - [ ] Configurable warning dialog timeout (auto-dismiss after N seconds)
-- [ ] "Always allow this pattern" quick action from the warning dialog
+- [x] "Always allow this pattern" quick action from the warning dialog
 
 ---
 

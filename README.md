@@ -21,10 +21,12 @@ Detects secrets, unsafe patterns, and vulnerabilities *before* they land in your
 
 PasteShield intercepts every paste (`Ctrl+V` / `Cmd+V`) in the editor and scans the clipboard content for dangerous patterns — API keys, hardcoded passwords, unsafe JavaScript, prototype pollution, and more — before the text ever reaches your file.
 
-> **Replace the GIF below with a screen recording of PasteShield warning on a paste.**
+<div align="center">
+  <img src="resources/codelens.gif" alt="PasteShield in action" width="700"/>
+</div>
 
 <div align="center">
-  <img src="resources/demo.gif" alt="PasteShield in action" width="700"/>
+  <img src="resources/full.gif" alt="PasteShield in action" width="700"/>
 </div>
 
 ---
