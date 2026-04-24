@@ -39,7 +39,6 @@
   },
   "devDependencies": {
     "@types/minimatch": "^5.1.2",
-    "@types/node": "^20.19.39",
     "@types/vscode": "^1.93.0",
     "typescript": "^5.5.0"
   },
@@ -151,6 +150,179 @@
           "default": "",
           "markdownDescription": "Custom path for audit log export. Leave empty to use default VS Code storage. Supports absolute paths.",
           "scope": "machine"
+        },
+        "pasteShield.customPatterns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Unique name for this pattern"
+              },
+              "regex": {
+                "type": "string",
+                "description": "Regular expression pattern"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "critical",
+                  "high",
+                  "medium",
+                  "low"
+                ],
+                "description": "Severity level"
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of what this pattern detects"
+              },
+              "category": {
+                "type": "string",
+                "description": "Category for grouping (e.g., 'Custom', 'Company-Specific')"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true,
+                "description": "Enable or disable this pattern"
+              }
+            },
+            "required": [
+              "name",
+              "regex",
+              "severity"
+            ]
+          },
+          "default": [],
+          "markdownDescription": "Custom user-defined regex patterns with severity levels. Each pattern must have a unique name, valid regex, and severity.",
+          "scope": "application"
+        },
+        "pasteShield.secretManagerProvider": {
+          "type": "string",
+          "default": "none",
+          "enum": [
+            "none",
+            "vault",
+            "aws",
+            "azure",
+            "gcp"
+          ],
+          "enumDescriptions": [
+            "No secret manager configured",
+            "HashiCorp Vault",
+            "AWS Secrets Manager",
+            "Azure Key Vault",
+            "Google Secret Manager"
+          ],
+          "description": "Select the secret management provider for storing detected secrets securely.",
+          "scope": "application"
+        },
+        "pasteShield.vaultUrl": {
+          "type": "string",
+          "default": "",
+          "description": "HashiCorp Vault server URL (e.g., https://vault.example.com:8200)",
+          "scope": "application"
+        },
+        "pasteShield.vaultToken": {
+          "type": "string",
+          "default": "",
+          "description": "Vault authentication token",
+          "scope": "application"
+        },
+        "pasteShield.awsRegion": {
+          "type": "string",
+          "default": "us-east-1",
+          "description": "AWS region for Secrets Manager",
+          "scope": "application"
+        },
+        "pasteShield.awsAccessKeyId": {
+          "type": "string",
+          "default": "",
+          "description": "AWS Access Key ID for Secrets Manager access",
+          "scope": "application"
+        },
+        "pasteShield.awsSecretAccessKey": {
+          "type": "string",
+          "default": "",
+          "description": "AWS Secret Access Key for Secrets Manager access",
+          "scope": "application"
+        },
+        "pasteShield.azureVaultUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Azure Key Vault URL (e.g., https://myvault.vault.azure.net/)",
+          "scope": "application"
+        },
+        "pasteShield.azureTenantId": {
+          "type": "string",
+          "default": "",
+          "description": "Azure AD Tenant ID",
+          "scope": "application"
+        },
+        "pasteShield.azureClientId": {
+          "type": "string",
+          "default": "",
+          "description": "Azure Service Principal Client ID",
+          "scope": "application"
+        },
+        "pasteShield.azureClientSecret": {
+          "type": "string",
+          "default": "",
+          "description": "Azure Service Principal Client Secret",
+          "scope": "application"
+        },
+        "pasteShield.gcpProjectId": {
+          "type": "string",
+          "default": "",
+          "description": "Google Cloud Project ID for Secret Manager",
+          "scope": "application"
+        },
+        "pasteShield.gcpCredentials": {
+          "type": "string",
+          "default": "",
+          "description": "Google Cloud service account credentials (JSON)",
+          "scope": "application"
+        },
+        "pasteShield.enterpriseMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable enterprise mode for team-wide policy enforcement",
+          "scope": "machine"
+        },
+        "pasteShield.teamMembers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "admin",
+                  "developer",
+                  "auditor"
+                ]
+              },
+              "groups": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": [],
+          "description": "Team members configuration for enterprise deployments",
+          "scope": "machine"
         }
       }
     },
@@ -244,6 +416,36 @@
         "title": "Add to Workspace Ignore List",
         "category": "PasteShield",
         "icon": "$(list-unordered)"
+      },
+      {
+        "command": "pasteShield.manageCustomPatterns",
+        "title": "Manage Custom Patterns",
+        "category": "PasteShield",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "pasteShield.configureSecretManager",
+        "title": "Configure Secret Manager",
+        "category": "PasteShield",
+        "icon": "$(key)"
+      },
+      {
+        "command": "pasteShield.listStoredSecrets",
+        "title": "List Stored Secrets",
+        "category": "PasteShield",
+        "icon": "$(lock)"
+      },
+      {
+        "command": "pasteShield.showEnterprisePolicy",
+        "title": "Show Enterprise Policy",
+        "category": "PasteShield",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "pasteShield.exportComplianceReport",
+        "title": "Export Compliance Report",
+        "category": "PasteShield",
+        "icon": "$(output)"
       }
     ],
     "menus": {
