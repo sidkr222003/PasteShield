@@ -3,6 +3,7 @@
  * 
  * Provides a TreeDataProvider for displaying scan history in the sidebar.
  * Uses VS Code theme colors and icons for a professional, responsive UI.
+ * Enhanced with GitHub-style graph icons and improved visual hierarchy.
  */
 
 import * as vscode from 'vscode';
@@ -29,12 +30,13 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<HistoryItem>
       
       if (history.length === 0) {
         const emptyItem = new HistoryItem(
-          'No scan history available',
+          'No scan history yet',
           vscode.TreeItemCollapsibleState.None,
           undefined,
-          new vscode.ThemeIcon('info')
+          new vscode.ThemeIcon('shield', new vscode.ThemeColor('descriptionForeground'))
         );
         emptyItem.contextValue = 'emptyHistory';
+        emptyItem.description = 'Paste something to see security scans here';
         return [emptyItem];
       }
 
@@ -45,7 +47,7 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<HistoryItem>
     if (element.entry) {
       return element.entry.detections.map(det => 
         new HistoryItem(
-          `[${det.severity.toUpperCase()}] ${det.type}${det.category ? ` (${det.category})` : ''}`,
+          `${det.type}${det.category ? ` • ${det.category}` : ''}`,
           vscode.TreeItemCollapsibleState.None,
           {
             command: 'pasteShield.showDetectionDetails',
@@ -64,11 +66,11 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<HistoryItem>
   private createEntryItem(entry: ScanHistoryEntry): HistoryItem {
     const date = new Date(entry.timestamp);
     const dateStr = date.toLocaleDateString();
-    const timeStr = date.toLocaleTimeString();
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const fileLabel = entry.fileName ? this.truncateFileName(entry.fileName) : 'Unknown file';
     const actionIcon = this.getActionThemeIcon(entry.actionTaken);
     
-    const label = `${fileLabel} - ${dateStr} ${timeStr} (${entry.detections.length} issues)`;
+    const label = `${fileLabel}`;
     
     const item = new HistoryItem(
       label,
@@ -78,7 +80,7 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<HistoryItem>
     );
     item.entry = entry;
     item.tooltip = `${fileLabel}\nAction: ${entry.actionTaken.toUpperCase()}\nDetections: ${entry.detections.length}\nTime: ${date.toLocaleString()}`;
-    item.description = `${entry.actionTaken.toUpperCase()} • ${this.getHighestSeverity(entry.detections)}`;
+    item.description = `${timeStr} • ${this.getHighestSeverity(entry.detections)} • ${entry.detections.length} issue${entry.detections.length !== 1 ? 's' : ''}`;
     item.contextValue = 'historyEntry';
     
     // Set resource URI for theming support
@@ -109,7 +111,7 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<HistoryItem>
   private getSeverityThemeIcon(severity: string): vscode.ThemeIcon {
     switch (severity.toLowerCase()) {
       case 'critical': return new vscode.ThemeIcon('error', new vscode.ThemeColor('editorError.foreground'));
-      case 'high': return new vscode.ThemeIcon('shield', new vscode.ThemeColor('editorWarning.foreground'));
+      case 'high': return new vscode.ThemeIcon('stop', new vscode.ThemeColor('editorWarning.foreground'));
       case 'medium': return new vscode.ThemeIcon('warning', new vscode.ThemeColor('editorInfo.foreground'));
       case 'low': return new vscode.ThemeIcon('info', new vscode.ThemeColor('descriptionForeground'));
       default: return new vscode.ThemeIcon('circle');
@@ -128,9 +130,9 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<HistoryItem>
 
   private getActionThemeIcon(action: string): vscode.ThemeIcon {
     switch (action) {
-      case 'pasted': return new vscode.ThemeIcon('check', new vscode.ThemeColor('terminal.ansiGreen'));
-      case 'cancelled': return new vscode.ThemeIcon('close', new vscode.ThemeColor('terminal.ansiRed'));
-      case 'ignored': return new vscode.ThemeIcon('mute', new vscode.ThemeColor('terminal.ansiYellow'));
+      case 'pasted': return new vscode.ThemeIcon('check-circle', new vscode.ThemeColor('terminal.ansiGreen'));
+      case 'cancelled': return new vscode.ThemeIcon('skip', new vscode.ThemeColor('terminal.ansiRed'));
+      case 'ignored': return new vscode.ThemeIcon('eye-closed', new vscode.ThemeColor('terminal.ansiYellow'));
       default: return new vscode.ThemeIcon('circle');
     }
   }

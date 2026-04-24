@@ -12,9 +12,20 @@
   "engines": {
     "vscode": "^1.93.0"
   },
-  "categories": ["Other", "Programming Languages"],
-  "keywords": ["security", "clipboard", "paste", "secrets", "scanner"],
-  "activationEvents": ["onStartupFinished"],
+  "categories": [
+    "Other",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "security",
+    "clipboard",
+    "paste",
+    "secrets",
+    "scanner"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -23,8 +34,11 @@
     "package": "npx @vscode/vsce package",
     "publish": "npx @vscode/vsce publish"
   },
-  "dependencies": {},
+  "dependencies": {
+    "minimatch": "^9.0.9"
+  },
   "devDependencies": {
+    "@types/minimatch": "^5.1.2",
     "@types/node": "^20.19.39",
     "@types/vscode": "^1.93.0",
     "typescript": "^5.5.0"
@@ -41,7 +55,9 @@
         },
         "pasteShield.ignoredPatterns": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "default": [],
           "markdownDescription": "Pattern names to skip during scanning. Example: `[\"eval() Call\", \"innerHTML Assignment\"]`. Run **PasteShield: Show Last Scan Report** to see all pattern names.",
           "scope": "resource"
@@ -55,7 +71,12 @@
         "pasteShield.minimumSeverity": {
           "type": "string",
           "default": "medium",
-          "enum": ["critical", "high", "medium", "low"],
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low"
+          ],
           "enumDescriptions": [
             "Only warn for critical issues (API keys, private keys, database credentials).",
             "Warn for high and critical issues (adds JWTs, hardcoded passwords, prototype pollution).",
@@ -67,7 +88,9 @@
         },
         "pasteShield.ignoredLanguages": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "default": [],
           "markdownDescription": "Language IDs where PasteShield paste scanning is disabled. Example: `[\"markdown\", \"plaintext\"]`. Note: `.env` and `.env.local` files are always excluded from paste interception regardless of this setting.",
           "scope": "resource"
@@ -80,10 +103,54 @@
         },
         "pasteShield.codeLensExcludedFiles": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "default": [],
           "markdownDescription": "Additional file basenames to exclude from CodeLens scanning (e.g. `[\".env.production\"]`).",
           "scope": "resource"
+        },
+        "pasteShield.enableHistory": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable persistent scan history tracking in the sidebar.",
+          "scope": "window"
+        },
+        "pasteShield.autoRefreshHistory": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically refresh the history view when new scans are completed.",
+          "scope": "window"
+        },
+        "pasteShield.workspaceIgnoreFile": {
+          "type": "string",
+          "default": ".pasteshieldignore",
+          "markdownDescription": "Name of the workspace-level ignore pattern file (similar to `.gitignore`). Patterns in this file apply only to the current workspace.",
+          "scope": "resource"
+        },
+        "pasteShield.useGitignorePatterns": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use patterns from `.gitignore` files to also ignore matching files from secret scanning.",
+          "scope": "resource"
+        },
+        "pasteShield.secretRotationReminderDays": {
+          "type": "number",
+          "default": 90,
+          "description": "Number of days after which to show a reminder to rotate detected secrets.",
+          "scope": "window"
+        },
+        "pasteShield.enableAuditLogging": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable audit logging for compliance reporting. Logs all detections and actions taken.",
+          "scope": "machine"
+        },
+        "pasteShield.auditLogPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Custom path for audit log export. Leave empty to use default VS Code storage. Supports absolute paths.",
+          "scope": "machine"
         }
       }
     },
@@ -123,53 +190,62 @@
         "title": "Open Ignored Patterns Settings",
         "category": "PasteShield",
         "icon": "$(settings-gear)"
-      }
-    ],
-    "menus": {
-      "commandPalette": [
-        { "command": "pasteShield.paste", "when": "false" },
-        { "command": "pasteShield.toggle" },
-        { "command": "pasteShield.showLastReport" },
-        { "command": "pasteShield.codeLensDetails", "when": "false" },
-        { "command": "pasteShield.codeLensIgnore", "when": "false" },
-        { "command": "pasteShield.codeLensFix", "when": "false" }
-      ],
-      "editor/context": [
-        {
-          "command": "pasteShield.toggle",
-          "when": "editorTextFocus",
-          "group": "pasteShield@1"
-        },
-        {
-          "command": "pasteShield.showLastReport",
-          "when": "editorTextFocus",
-          "group": "pasteShield@2"
-        }
-      ]
-    },
-    "keybindings": [
-      {
-        "command": "pasteShield.paste",
-        "key": "ctrl+v",
-        "mac": "cmd+v",
-        "when": "editorTextFocus"
       },
       {
-        "command": "pasteShield.paste",
-        "key": "shift+insert",
-        "when": "editorTextFocus"
+        "command": "pasteShield.refreshHistory",
+        "title": "Refresh History",
+        "category": "PasteShield",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "pasteShield.clearHistory",
+        "title": "Clear History",
+        "category": "PasteShield",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "pasteShield.exportHistoryJson",
+        "title": "Export History as JSON",
+        "category": "PasteShield",
+        "icon": "$(json)"
+      },
+      {
+        "command": "pasteShield.exportHistoryText",
+        "title": "Export History as Text",
+        "category": "PasteShield",
+        "icon": "$(file-text)"
+      },
+      {
+        "command": "pasteShield.showDetectionDetails",
+        "title": "Show Detection Details",
+        "category": "PasteShield",
+        "icon": "$(info)"
+      },
+      {
+        "command": "pasteShield.showStatistics",
+        "title": "Show Statistics Dashboard",
+        "category": "PasteShield",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "pasteShield.exportAuditLog",
+        "title": "Export Audit Log",
+        "category": "PasteShield",
+        "icon": "$(output)"
+      },
+      {
+        "command": "pasteShield.showRotationReminders",
+        "title": "Show Secret Rotation Reminders",
+        "category": "PasteShield",
+        "icon": "$(clock)"
+      },
+      {
+        "command": "pasteShield.addToWorkspaceIgnore",
+        "title": "Add to Workspace Ignore List",
+        "category": "PasteShield",
+        "icon": "$(list-unordered)"
       }
     ],
-    "views": {
-      "explorer": [
-        {
-          "id": "pasteShieldHistory",
-          "name": "PasteShield History",
-          "icon": "$(history)",
-          "contextualTitle": "PasteShield"
-        }
-      ]
-    },
     "menus": {
       "view/title": [
         {
@@ -198,6 +274,29 @@
           "command": "pasteShield.showLastReport",
           "when": "view == pasteShieldHistory && viewItem == historyEntry",
           "group": "inline"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "pasteShield.paste",
+        "key": "ctrl+v",
+        "mac": "cmd+v",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "pasteShield.paste",
+        "key": "shift+insert",
+        "when": "editorTextFocus"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "pasteShieldHistory",
+          "name": "PasteShield History",
+          "icon": "$(history)",
+          "contextualTitle": "PasteShield"
         }
       ]
     },

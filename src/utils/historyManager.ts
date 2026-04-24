@@ -43,7 +43,8 @@ export class HistoryManager {
    */
   public isEnabled(): boolean {
     const config = vscode.workspace.getConfiguration('pasteShield');
-    return config.get<boolean>('enableHistory', false);
+    // History is now always enabled by default for better UX
+    return config.get<boolean>('enableHistory', true);
   }
 
   /**

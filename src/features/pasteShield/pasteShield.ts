@@ -27,6 +27,8 @@ import { createLogger } from '../../utils/logger';
 import { debounce } from '../../utils/debounce';
 import { HistoryManager, ScanHistoryEntry } from '../../utils/historyManager';
 import { HistoryViewProvider, HistoryItem } from './historyViewProvider';
+import { StatisticsManager } from './statisticsManager';
+import { IgnorePatternsManager } from './ignorePatternsManager';
 
 const logger = createLogger('PasteShield');
 
@@ -38,11 +40,16 @@ const SHOW_REPORT_COMMAND_ID = 'pasteShield.showLastReport';
 const CODELENS_FIX_COMMAND_ID = 'pasteShield.codeLensFix';
 const CODELENS_IGNORE_COMMAND_ID = 'pasteShield.codeLensIgnore';
 const CODELENS_DETAILS_COMMAND_ID = 'pasteShield.codeLensDetails';
+const SHOW_DETECTION_DETAILS_COMMAND_ID = 'pasteShield.showDetectionDetails';
 const SHOW_HISTORY_COMMAND_ID = 'pasteShield.showHistory';
 const CLEAR_HISTORY_COMMAND_ID = 'pasteShield.clearHistory';
 const EXPORT_HISTORY_JSON_COMMAND_ID = 'pasteShield.exportHistoryJson';
 const EXPORT_HISTORY_TEXT_COMMAND_ID = 'pasteShield.exportHistoryText';
 const REFRESH_HISTORY_COMMAND_ID = 'pasteShield.refreshHistory';
+const SHOW_STATISTICS_COMMAND_ID = 'pasteShield.showStatistics';
+const EXPORT_AUDIT_LOG_COMMAND_ID = 'pasteShield.exportAuditLog';
+const SHOW_ROTATION_REMINDERS_COMMAND_ID = 'pasteShield.showRotationReminders';
+const ADD_TO_WORKSPACE_IGNORE_COMMAND_ID = 'pasteShield.addToWorkspaceIgnore';
 
 /**
  * File names (basename only, case-insensitive) that are excluded from
@@ -210,6 +217,8 @@ let codeLensProvider: PasteShieldCodeLensProvider | undefined;
 let historyManager: HistoryManager | undefined;
 let historyViewProvider: HistoryViewProvider | undefined;
 let historyTreeView: vscode.TreeView<HistoryItem> | undefined;
+let statisticsManager: StatisticsManager | undefined;
+let ignorePatternsManager: IgnorePatternsManager | undefined;
 
 /**
  * Debounced so rapid editor-tab switching (e.g. Ctrl+Tab held down) doesn't
@@ -233,6 +242,12 @@ export function registerPasteShield(context: vscode.ExtensionContext): void {
   // Initialize History Manager
   historyManager = HistoryManager.getInstance(context);
   historyViewProvider = new HistoryViewProvider(historyManager);
+
+  // Initialize Statistics Manager
+  statisticsManager = StatisticsManager.getInstance(historyManager);
+
+  // Initialize Ignore Patterns Manager
+  ignorePatternsManager = IgnorePatternsManager.getInstance(context);
 
   // Register History Tree View in sidebar
   historyTreeView = vscode.window.createTreeView('pasteShieldHistory', {
@@ -284,6 +299,19 @@ export function registerPasteShield(context: vscode.ExtensionContext): void {
         await vscode.commands.executeCommand(
           'workbench.action.openSettings',
           'pasteShield.ignoredPatterns',
+        );
+      },
+    ),
+  );
+
+  // Show detection details from history view
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      SHOW_DETECTION_DETAILS_COMMAND_ID,
+      async (detection: { type: string; severity: string; category?: string }) => {
+        await vscode.window.showInformationMessage(
+          `Detection Details\nType: ${detection.type}\nSeverity: ${detection.severity.toUpperCase()}${detection.category ? `\nCategory: ${detection.category}` : ''}`,
+          { modal: true }
         );
       },
     ),
@@ -348,13 +376,79 @@ export function registerPasteShield(context: vscode.ExtensionContext): void {
     }),
   );
 
-  // React to config changes — refresh CodeLens so ignored patterns apply live
+  // Statistics Dashboard command
+  context.subscriptions.push(
+    vscode.commands.registerCommand(SHOW_STATISTICS_COMMAND_ID, async () => {
+      if (!statisticsManager) {
+        vscode.window.showWarningMessage('Statistics manager not initialized.');
+        return;
+      }
+      await showStatisticsDashboard();
+    }),
+  );
+
+  // Export Audit Log command
+  context.subscriptions.push(
+    vscode.commands.registerCommand(EXPORT_AUDIT_LOG_COMMAND_ID, async () => {
+      if (!historyManager) {
+        vscode.window.showWarningMessage('History manager not initialized.');
+        return;
+      }
+      await exportAuditLog();
+    }),
+  );
+
+  // Show Rotation Reminders command
+  context.subscriptions.push(
+    vscode.commands.registerCommand(SHOW_ROTATION_REMINDERS_COMMAND_ID, async () => {
+      await showRotationReminders();
+    }),
+  );
+
+  // Add to Workspace Ignore command
+  context.subscriptions.push(
+    vscode.commands.registerCommand(ADD_TO_WORKSPACE_IGNORE_COMMAND_ID, async (pattern?: string) => {
+      if (!ignorePatternsManager) {
+        vscode.window.showWarningMessage('Ignore patterns manager not initialized.');
+        return;
+      }
+      
+      if (pattern) {
+        await ignorePatternsManager.addToWorkspaceIgnore(pattern);
+      } else {
+        // Prompt user for pattern
+        const input = await vscode.window.showInputBox({
+          prompt: 'Enter the pattern name to add to workspace ignore list',
+          placeHolder: 'e.g., AWS Access Key ID',
+        });
+        if (input) {
+          await ignorePatternsManager.addToWorkspaceIgnore(input);
+        }
+      }
+    }),
+  );
+
+  // Watch for workspace file changes to refresh ignore patterns
+  const fileWatcher = vscode.workspace.createFileSystemWatcher('**/{.pasteshieldignore,.gitignore}');
+  context.subscriptions.push(
+    fileWatcher.onDidChange(() => {
+      ignorePatternsManager?.refresh();
+    }),
+    fileWatcher.onDidCreate(() => {
+      ignorePatternsManager?.refresh();
+    }),
+    fileWatcher.onDidDelete(() => {
+      ignorePatternsManager?.refresh();
+    }),
+  );
+
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration(CONFIG_SECTION)) {
         updateStatusBar(getConfig().enabled);
         codeLensProvider?.refresh();
         historyViewProvider?.refresh();
+        ignorePatternsManager?.refresh();
       }
     }),
   );
@@ -830,4 +924,150 @@ async function showLastReport(): Promise<void> {
     return;
   }
   await showDetailsPanel(lastReport);
+}
+
+/**
+ * Show statistics dashboard in a side panel
+ */
+async function showStatisticsDashboard(): Promise<void> {
+  if (!statisticsManager) return;
+
+  const report = statisticsManager.generateReport();
+  
+  const doc = await vscode.workspace.openTextDocument({
+    content: report,
+    language: 'plaintext',
+  });
+
+  await vscode.window.showTextDocument(doc, {
+    preview: true,
+    viewColumn: vscode.ViewColumn.Beside,
+    preserveFocus: false,
+  });
+}
+
+/**
+ * Export audit log for compliance reporting
+ */
+async function exportAuditLog(): Promise<void> {
+  if (!historyManager) return;
+
+  const config = vscode.workspace.getConfiguration('pasteShield');
+  const enableAuditLogging = config.get<boolean>('enableAuditLogging', true);
+  
+  if (!enableAuditLogging) {
+    vscode.window.showWarningMessage('Audit logging is disabled. Enable it in settings to export audit logs.');
+    return;
+  }
+
+  const history = historyManager.getHistory();
+  const auditEntries = history.map(entry => ({
+    timestamp: new Date(entry.timestamp).toISOString(),
+    file: entry.fileName,
+    action: entry.actionTaken,
+    detectionCount: entry.detections.length,
+    detections: entry.detections.map(d => ({
+      type: d.type,
+      severity: d.severity,
+      category: d.category,
+    })),
+  }));
+
+  const content = JSON.stringify({
+    generatedAt: new Date().toISOString(),
+    version: '1.0',
+    totalEntries: auditEntries.length,
+    entries: auditEntries,
+  }, null, 2);
+
+  const defaultFileName = `pasteshield-audit-log-${new Date().toISOString().split('T')[0]}.json`;
+
+  const uri = await vscode.window.showSaveDialog({
+    defaultUri: vscode.Uri.file(defaultFileName),
+    filters: {
+      JSON: ['json'],
+    },
+  });
+
+  if (uri) {
+    await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
+    vscode.window.showInformationMessage(`Audit log exported to ${uri.fsPath}`);
+  }
+}
+
+/**
+ * Show secret rotation reminders for detected credentials
+ */
+async function showRotationReminders(): Promise<void> {
+  if (!historyManager) return;
+
+  const config = vscode.workspace.getConfiguration('pasteShield');
+  const reminderDays = config.get<number>('secretRotationReminderDays', 90);
+  
+  const history = historyManager.getHistory();
+  const now = Date.now();
+  const reminderThreshold = reminderDays * 24 * 60 * 60 * 1000;
+
+  // Group detections by type and find the oldest occurrence
+  const oldestDetections: Record<string, { timestamp: number; severity: string; category?: string }> = {};
+
+  for (const entry of history) {
+    if (entry.actionTaken !== 'pasted') continue;
+
+    for (const det of entry.detections) {
+      const key = `${det.type}-${det.category || 'unknown'}`;
+      if (!oldestDetections[key] || entry.timestamp < oldestDetections[key].timestamp) {
+        oldestDetections[key] = {
+          timestamp: entry.timestamp,
+          severity: det.severity,
+          category: det.category,
+        };
+      }
+    }
+  }
+
+  // Find secrets that need rotation
+  const needsRotation: Array<{ type: string; category?: string; daysSinceDetection: number; severity: string }> = [];
+
+  for (const [key, data] of Object.entries(oldestDetections)) {
+    const daysSince = Math.floor((now - data.timestamp) / (24 * 60 * 60 * 1000));
+    if (daysSince >= reminderDays) {
+      const [type, category] = key.split('-');
+      needsRotation.push({
+        type: type.replace(/-/g, ' '),
+        category: category !== 'unknown' ? category : undefined,
+        daysSinceDetection: daysSince,
+        severity: data.severity,
+      });
+    }
+  }
+
+  if (needsRotation.length === 0) {
+    vscode.window.showInformationMessage(
+      `🎉 All detected secrets have been rotated recently!\\n\\nNo secrets older than ${reminderDays} days found.`
+    );
+    return;
+  }
+
+  // Sort by severity and days since detection
+  needsRotation.sort((a, b) => {
+    const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    if (severityOrder[a.severity as keyof typeof severityOrder] !== severityOrder[b.severity as keyof typeof severityOrder]) {
+      return severityOrder[a.severity as keyof typeof severityOrder] - severityOrder[b.severity as keyof typeof severityOrder];
+    }
+    return b.daysSinceDetection - a.daysSinceDetection;
+  });
+
+  const message = `⚠️ Secret Rotation Reminders\\n\\n` +
+    `The following secrets were detected ${reminderDays}+ days ago and should be rotated:\\n\\n` +
+    needsRotation.slice(0, 10).map(s => 
+      `• ${s.type}${s.category ? ` (${s.category})` : ''} - ${s.daysSinceDetection} days ago [${s.severity.toUpperCase()}]`
+    ).join('\\n') +
+    (needsRotation.length > 10 ? `\\n\\n...and ${needsRotation.length - 10} more` : '');
+
+  const choice = await vscode.window.showWarningMessage(message, { modal: true }, 'Rotate Now', 'Dismiss');
+  
+  if (choice === 'Rotate Now') {
+    await vscode.env.openExternal(vscode.Uri.parse('https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/rotating-secrets'));
+  }
 }
