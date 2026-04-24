@@ -19,6 +19,10 @@
 
 PasteShield intercepts every paste (`Ctrl+V` / `Cmd+V`) in the editor and scans the clipboard content for dangerous patterns — API keys, hardcoded passwords, unsafe JavaScript, prototype pollution, and more — before the text ever reaches your file.
 
+<div align="center">
+  <img src="https://raw.githubusercontent.com/sidkr222003/pasteshield/main/resources/demo.gif" alt="PasteShield paste interception demo" width="700"/>
+</div>
+
 It works entirely offline, using a high-performance regex engine that evaluates **100+ pre-compiled patterns** across **15 categories** in under 50 ms. Detected threats are surfaced through inline warnings, CodeLens annotations, a persistent history sidebar, and an ASCII statistics dashboard.
 
 ### Why PasteShield vs Gitleaks?
@@ -47,7 +51,7 @@ Enable **silent mode** in settings to log detections to the sidebar without bloc
 PasteShield also scans already-open files and surfaces CodeLens annotations directly above risky lines. Each lens shows the severity and provides one-click actions: view details, ignore the pattern, or open settings.
 
 <div align="center">
-  <img src="resources/codelens.gif" alt="PasteShield in action" width="600"/>
+  <img src="https://raw.githubusercontent.com/sidkr222003/pasteshield/main/resources/codelens.gif" alt="PasteShield in action" width="600"/>
 </div>
 
 ### Severity levels
