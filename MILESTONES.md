@@ -2,6 +2,11 @@
 
 Planned features and improvements for future releases.
 
+
+## v1.7.0 — Custom Patterns & Ignore Management (COMPLETED)
+- [x] Fixed and reduced the size of package more
+- [x] optimized the code more
+  
 ---
 
 ## v1.5.0 — Custom Patterns & Ignore Management (COMPLETED)

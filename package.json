@@ -2,7 +2,7 @@
   "name": "pasteshield",
   "displayName": "PasteShield",
   "description": "Intercepts secrets before they land in your file \u2014 100+ patterns, 100% offline.",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "publisher": "NK2552003",
   "icon": "resources/icon.png",
   "repository": {
