@@ -20,17 +20,24 @@ export function activate(context: vscode.ExtensionContext) {
       const patterns = customPatternsManager.getAllPatterns();
       
       if (patterns.length === 0) {
-        const choice = await vscode.window.showInformationMessage(
-          'No custom patterns defined. Would you like to add one?',
-          'Add Pattern',
-          'Import Patterns',
-          'Cancel'
+        const choice = await vscode.window.showQuickPick(
+          [
+            { label: 'Add Pattern', description: 'Create a new custom regex rule' },
+            { label: 'Import Patterns', description: 'Import custom patterns from JSON' },
+            { label: 'Open Settings', description: 'Edit pasteShield.customPatterns directly' },
+          ],
+          { placeHolder: 'No custom patterns defined yet' },
         );
-        
-        if (choice === 'Add Pattern') {
+
+        if (choice?.label === 'Add Pattern') {
           await promptAddCustomPattern(customPatternsManager);
-        } else if (choice === 'Import Patterns') {
+        } else if (choice?.label === 'Import Patterns') {
           await promptImportPatterns(customPatternsManager);
+        } else if (choice?.label === 'Open Settings') {
+          await vscode.commands.executeCommand(
+            'workbench.action.openSettings',
+            'pasteShield.customPatterns',
+          );
         }
         return;
       }

@@ -50,9 +50,25 @@ export class CustomPatternsManager {
    */
   private loadCustomPatterns(): void {
     const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
-    const patterns = config.get<CustomPattern[]>('customPatterns', []);
-    
-    this.customPatterns = patterns.filter(p => p.enabled !== false);
+    const rawPatterns = config.get<unknown>('customPatterns', []);
+    if (!Array.isArray(rawPatterns)) {
+      vscode.window.showWarningMessage(
+        'PasteShield: pasteShield.customPatterns must be an array. Check your settings.json.',
+      );
+      this.customPatterns = [];
+      this.compilePatterns();
+      return;
+    }
+
+    const validPatterns = rawPatterns.filter((pattern): pattern is CustomPattern => {
+      if (!pattern || typeof pattern !== 'object') return false;
+      const entry = pattern as CustomPattern;
+      return typeof entry.name === 'string'
+        && typeof entry.regex === 'string'
+        && typeof entry.severity === 'string';
+    });
+
+    this.customPatterns = validPatterns.filter(p => p.enabled !== false);
     this.compilePatterns();
   }
 

@@ -35,7 +35,8 @@
     "vulnerability"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:pasteShield.manageCustomPatterns"
   ],
   "main": "./dist/extension.js",
   "scripts": {
