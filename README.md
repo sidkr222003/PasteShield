@@ -310,6 +310,7 @@ All commands are available via the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+
 |---|---|
 | `PasteShield: Show Enterprise Policy` | Display the active policy and compliance summary |
 | `PasteShield: Export Compliance Report` | Save the compliance report as JSON |
+| `PasteShield: Validate Policy File` | Validate `.pasteshield-policy.json` and show errors in Problems |
 
 ---
 

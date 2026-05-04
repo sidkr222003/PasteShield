@@ -48,6 +48,8 @@
   "dependencies": {
     "chart.js": "^4.4.6",
     "@vscode/codicons": "^0.0.36",
+    "ajv": "^8.17.1",
+    "jsonc-parser": "^3.2.1",
     "minimatch": "^9.0.9"
   },
   "devDependencies": {
@@ -324,6 +326,15 @@
         }
       }
     },
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          ".pasteshield-policy.json",
+          "**/.pasteshield-policy.json"
+        ],
+        "url": "https://raw.githubusercontent.com/sidkr222003/pasteshield/main/schema/policy.schema.json"
+      }
+    ],
     "commands": [
       {
         "command": "pasteShield.paste",
@@ -450,6 +461,12 @@
         "title": "Export Compliance Report",
         "category": "PasteShield",
         "icon": "$(output)"
+      },
+      {
+        "command": "pasteShield.validatePolicyFile",
+        "title": "Validate Policy File",
+        "category": "PasteShield",
+        "icon": "$(check)"
       }
     ],
     "menus": {

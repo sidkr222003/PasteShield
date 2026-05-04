@@ -1,0 +1,162 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/sidkr222003/pasteshield/main/schema/policy.schema.json",
+  "title": "PasteShield Enterprise Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "id",
+    "name",
+    "description",
+    "enabled",
+    "rules"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema URL for editor validation"
+    },
+    "version": {
+      "type": "string",
+      "description": "Policy schema version"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique policy identifier"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable policy name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Policy purpose and scope"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "Enable or disable enforcement"
+    },
+    "enforcedAt": {
+      "type": "integer",
+      "description": "Unix timestamp (ms) when policy was enforced"
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/policyRule"
+      },
+      "description": "Ordered list of policy rules"
+    }
+  },
+  "definitions": {
+    "policyRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "severity",
+        "action"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique rule identifier"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "block_pattern",
+            "require_encryption",
+            "audit_logging",
+            "rotation_policy",
+            "allowed_categories"
+          ],
+          "description": "Rule type"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low"
+          ],
+          "description": "Rule severity"
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "block",
+            "warn",
+            "audit",
+            "encrypt"
+          ],
+          "description": "Action applied when the rule is violated"
+        },
+        "patternNames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Pattern names to target when type is block_pattern"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Allowed categories when type is allowed_categories"
+        },
+        "message": {
+          "type": "string",
+          "description": "Custom message shown on violation"
+        },
+        "exceptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "File patterns or user groups exempted from this rule"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "block_pattern"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "patternNames"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "allowed_categories"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "categories"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

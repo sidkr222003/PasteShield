@@ -3,9 +3,13 @@ import { registerPasteShield } from "./features/pasteShield/pasteShield";
 import { CustomPatternsManager } from "./features/pasteShield/customPatternsManager";
 import { SecretManagementIntegration } from "./features/pasteShield/secretManagement";
 import { EnterprisePolicyManager } from "./features/pasteShield/enterprisePolicy";
+import { validatePolicyFile } from "./features/pasteShield/policyValidator";
 
 export function activate(context: vscode.ExtensionContext) {
   registerPasteShield(context);
+
+  const policyDiagnostics = vscode.languages.createDiagnosticCollection('PasteShield Policy');
+  context.subscriptions.push(policyDiagnostics);
   
   // Initialize Custom Patterns Manager
   const customPatternsManager = CustomPatternsManager.getInstance(context);
@@ -247,6 +251,13 @@ Blocked Pastes: ${report.blockedPastes}
       // For now, generate an empty report
       const report = policyManager.generateComplianceReport([]);
       await policyManager.exportComplianceReport(report);
+    })
+  );
+
+  // Register Validate Policy File command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('pasteShield.validatePolicyFile', async () => {
+      await validatePolicyFile(context, policyDiagnostics);
     })
   );
 }
