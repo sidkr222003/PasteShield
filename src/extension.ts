@@ -3,9 +3,13 @@ import { registerPasteShield } from "./features/pasteShield/pasteShield";
 import { CustomPatternsManager } from "./features/pasteShield/customPatternsManager";
 import { SecretManagementIntegration } from "./features/pasteShield/secretManagement";
 import { EnterprisePolicyManager } from "./features/pasteShield/enterprisePolicy";
+import { validatePolicyFile } from "./features/pasteShield/policyValidator";
 
 export function activate(context: vscode.ExtensionContext) {
   registerPasteShield(context);
+
+  const policyDiagnostics = vscode.languages.createDiagnosticCollection('PasteShield Policy');
+  context.subscriptions.push(policyDiagnostics);
   
   // Initialize Custom Patterns Manager
   const customPatternsManager = CustomPatternsManager.getInstance(context);
@@ -16,17 +20,24 @@ export function activate(context: vscode.ExtensionContext) {
       const patterns = customPatternsManager.getAllPatterns();
       
       if (patterns.length === 0) {
-        const choice = await vscode.window.showInformationMessage(
-          'No custom patterns defined. Would you like to add one?',
-          'Add Pattern',
-          'Import Patterns',
-          'Cancel'
+        const choice = await vscode.window.showQuickPick(
+          [
+            { label: 'Add Pattern', description: 'Create a new custom regex rule' },
+            { label: 'Import Patterns', description: 'Import custom patterns from JSON' },
+            { label: 'Open Settings', description: 'Edit pasteShield.customPatterns directly' },
+          ],
+          { placeHolder: 'No custom patterns defined yet' },
         );
-        
-        if (choice === 'Add Pattern') {
+
+        if (choice?.label === 'Add Pattern') {
           await promptAddCustomPattern(customPatternsManager);
-        } else if (choice === 'Import Patterns') {
+        } else if (choice?.label === 'Import Patterns') {
           await promptImportPatterns(customPatternsManager);
+        } else if (choice?.label === 'Open Settings') {
+          await vscode.commands.executeCommand(
+            'workbench.action.openSettings',
+            'pasteShield.customPatterns',
+          );
         }
         return;
       }
@@ -247,6 +258,13 @@ Blocked Pastes: ${report.blockedPastes}
       // For now, generate an empty report
       const report = policyManager.generateComplianceReport([]);
       await policyManager.exportComplianceReport(report);
+    })
+  );
+
+  // Register Validate Policy File command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('pasteShield.validatePolicyFile', async () => {
+      await validatePolicyFile(context, policyDiagnostics);
     })
   );
 }

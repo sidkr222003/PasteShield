@@ -104,6 +104,7 @@ This document covers how to test PasteShield features manually and describes the
 | Export compliance | Run "PasteShield: Export Compliance Report" | JSON report saved with 30-day metrics |
 | Policy templates | Create strict/moderate/permissive policy | Rules reflect the template |
 | Exceptions | Add file path to rule exceptions | Paste in that file bypasses the rule |
+| Validate policy file | Run "PasteShield: Validate Policy File" with invalid JSON | Problems panel shows schema errors |
 
 ### Ignore Patterns
 

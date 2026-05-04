@@ -16,6 +16,9 @@ node_modules/
 *.tmp
 *.temp
 
+# PasteShield local logs
+.pasteshield-fp.json
+
 # Environment
 .env
 .env.local

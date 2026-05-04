@@ -2,7 +2,7 @@
   "name": "pasteshield",
   "displayName": "PasteShield",
   "description": "Intercepts secrets before they land in your file \u2014 100+ patterns, 100% offline.",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "publisher": "NK2552003",
   "icon": "resources/icon.png",
   "repository": {
@@ -35,7 +35,8 @@
     "vulnerability"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:pasteShield.manageCustomPatterns"
   ],
   "main": "./dist/extension.js",
   "scripts": {
@@ -46,6 +47,10 @@
     "publish": "npx @vscode/vsce publish"
   },
   "dependencies": {
+    "chart.js": "^4.4.6",
+    "@vscode/codicons": "^0.0.36",
+    "ajv": "^8.17.1",
+    "jsonc-parser": "^3.2.1",
     "minimatch": "^9.0.9"
   },
   "devDependencies": {
@@ -83,6 +88,20 @@
           "type": "boolean",
           "default": true,
           "description": "Show a temporary inline gutter decoration at the insertion point after a warned paste (auto-clears after 10 seconds).",
+          "scope": "window"
+        },
+        "pasteShield.statsMode": {
+          "type": "string",
+          "default": "visual",
+          "enum": [
+            "visual",
+            "ascii"
+          ],
+          "enumDescriptions": [
+            "Show the statistics dashboard in a visual webview with charts.",
+            "Show the legacy ASCII dashboard in a text editor."
+          ],
+          "description": "Choose how PasteShield statistics are rendered.",
           "scope": "window"
         },
         "pasteShield.minimumSeverity": {
@@ -308,6 +327,15 @@
         }
       }
     },
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          ".pasteshield-policy.json",
+          "**/.pasteshield-policy.json"
+        ],
+        "url": "https://raw.githubusercontent.com/sidkr222003/pasteshield/main/schema/policy.schema.json"
+      }
+    ],
     "commands": [
       {
         "command": "pasteShield.paste",
@@ -344,6 +372,12 @@
         "title": "Ignore This Pattern",
         "category": "PasteShield",
         "icon": "$(mute)"
+      },
+      {
+        "command": "pasteShield.codeLensFalsePositive",
+        "title": "Mark as false positive",
+        "category": "PasteShield",
+        "icon": "$(report)"
       },
       {
         "command": "pasteShield.codeLensFix",
@@ -394,6 +428,12 @@
         "icon": "$(output)"
       },
       {
+        "command": "pasteShield.exportFalsePositiveLog",
+        "title": "Export False Positive Log",
+        "category": "PasteShield",
+        "icon": "$(report)"
+      },
+      {
         "command": "pasteShield.showRotationReminders",
         "title": "Show Secret Rotation Reminders",
         "category": "PasteShield",
@@ -434,6 +474,12 @@
         "title": "Export Compliance Report",
         "category": "PasteShield",
         "icon": "$(output)"
+      },
+      {
+        "command": "pasteShield.validatePolicyFile",
+        "title": "Validate Policy File",
+        "category": "PasteShield",
+        "icon": "$(check)"
       }
     ],
     "menus": {
@@ -463,6 +509,10 @@
         {
           "command": "pasteShield.showStatistics",
           "group": "3_analysis@1"
+        },
+        {
+          "command": "pasteShield.exportFalsePositiveLog",
+          "group": "3_analysis@2"
         },
         {
           "command": "pasteShield.manageCustomPatterns",
@@ -577,3 +627,5 @@
     ]
   }
 }
+
+

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/sidkr222003/pasteshield/main/schema/policy.schema.json",
+  "version": "1.0.0",
+  "id": "default-policy",
+  "name": "Default Security Policy",
+  "description": "Standard security policy for all developers",
+  "enabled": true,
+  "rules": [
+    {
+      "id": "block-critical",
+      "type": "block_pattern",
+      "severity": "critical",
+      "patternNames": [
+        "AWS Access Key ID",
+        "AWS Secret Access Key",
+        "GitHub PAT (classic)",
+        "Private Key (PEM)"
+      ],
+      "action": "block",
+      "message": "Critical credentials are blocked by enterprise policy."
+    },
+    {
+      "id": "audit-high",
+      "type": "audit_logging",
+      "severity": "high",
+      "action": "audit",
+      "message": "High-severity detections are logged for compliance."
+    }
+  ]
+}

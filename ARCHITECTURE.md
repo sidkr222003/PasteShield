@@ -494,6 +494,52 @@ This document provides a detailed explanation of every major module, class, and 
 ### `savePolicy()`
 - Writes the current policy to `.pasteshield-policy.json`
 
+### Policy File Schema
+- Schema URL: `https://raw.githubusercontent.com/sidkr222003/pasteshield/main/schema/policy.schema.json`
+- Local schema file: `schema/policy.schema.json`
+- Example policy: `examples/pasteshield-policy.example.json`
+- Add a `$schema` field to enable VS Code validation in-editor
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/sidkr222003/pasteshield/main/schema/policy.schema.json",
+  "version": "1.0.0",
+  "id": "default-policy",
+  "name": "Default Security Policy",
+  "description": "Standard security policy for all developers",
+  "enabled": true,
+  "rules": []
+}
+```
+
+### Policy Field Reference
+
+**Top-level fields**
+
+| Field | Type | Required | Allowed values | Default |
+|---|---|---|---|---|
+| `$schema` | string | No | URL to JSON Schema | None (optional) |
+| `version` | string | Yes | Any string (recommended SemVer) | None (required) |
+| `id` | string | Yes | Any non-empty string | None (required) |
+| `name` | string | Yes | Any non-empty string | None (required) |
+| `description` | string | Yes | Any string | None (required) |
+| `enabled` | boolean | Yes | `true` or `false` | None (required) |
+| `enforcedAt` | number | No | Unix timestamp in ms | Not set |
+| `rules` | array | Yes | Array of rule objects | None (required) |
+
+**Rule fields**
+
+| Field | Type | Required | Allowed values | Default |
+|---|---|---|---|---|
+| `id` | string | Yes | Any non-empty string | None (required) |
+| `type` | string | Yes | `block_pattern`, `require_encryption`, `audit_logging`, `rotation_policy`, `allowed_categories` | None (required) |
+| `severity` | string | Yes | `critical`, `high`, `medium`, `low` | None (required) |
+| `action` | string | Yes | `block`, `warn`, `audit`, `encrypt` | None (required) |
+| `patternNames` | array | Conditionally | Array of pattern names | `[]` (required for `block_pattern`) |
+| `categories` | array | Conditionally | Array of category names | `[]` (required for `allowed_categories`) |
+| `message` | string | No | Any string | Not set |
+| `exceptions` | array | No | Array of file patterns or group names | Not set |
+
 ### `generateComplianceReport(history)`
 - Analyzes the last 30 days of scan history
 - Computes:
@@ -558,6 +604,7 @@ This document provides a detailed explanation of every major module, class, and 
 | `pasteShield.listStoredSecrets` | `extension.ts` | List, view, rotate, or delete stored secrets |
 | `pasteShield.showEnterprisePolicy` | `extension.ts` | Display enterprise policy report |
 | `pasteShield.exportComplianceReport` | `extension.ts` | Export compliance report as JSON |
+| `pasteShield.validatePolicyFile` | `extension.ts` | Validate `.pasteshield-policy.json` and report errors |
 
 ---
 
