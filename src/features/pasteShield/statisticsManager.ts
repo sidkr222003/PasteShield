@@ -7,6 +7,7 @@
 
 import * as vscode from 'vscode';
 import { HistoryManager, ScanHistoryEntry } from '../../utils/historyManager';
+import { FalsePositiveStats } from './falsePositiveManager';
 
 export interface DailyStats {
   date: string;
@@ -238,7 +239,7 @@ export class StatisticsManager {
   /**
    * Generate a comprehensive report
    */
-  public generateReport(): string {
+  public generateReport(falsePositiveStats?: FalsePositiveStats): string {
     const summary = this.getSummary();
     const dailyStats = this.getDailyStats(7);
     const riskScore = this.getRiskScore();
@@ -289,6 +290,22 @@ export class StatisticsManager {
 
     for (const item of summary.topCategories.slice(0, 5)) {
       lines.push(`  ${item.count.toString().padStart(4)} × ${item.category}`);
+    }
+
+    if (falsePositiveStats) {
+      lines.push('');
+      lines.push('┌──────────────────────────────────────────────────────────┐');
+      lines.push('│            TOP FALSE POSITIVES                           │');
+      lines.push('└──────────────────────────────────────────────────────────┘');
+      lines.push('');
+
+      if (falsePositiveStats.topPatterns.length === 0) {
+        lines.push('  (none logged yet)');
+      } else {
+        for (const item of falsePositiveStats.topPatterns.slice(0, 5)) {
+          lines.push(`  ${item.count.toString().padStart(4)} × ${item.patternName}`);
+        }
+      }
     }
 
     lines.push('');

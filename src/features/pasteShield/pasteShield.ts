@@ -29,6 +29,7 @@ import { HistoryManager, ScanHistoryEntry } from '../../utils/historyManager';
 import { HistoryViewProvider, HistoryItem } from './historyViewProvider';
 import { StatisticsManager } from './statisticsManager';
 import { IgnorePatternsManager } from './ignorePatternsManager';
+import { FalsePositiveManager } from './falsePositiveManager';
 
 const logger = createLogger('PasteShield');
 
@@ -40,6 +41,7 @@ const SHOW_REPORT_COMMAND_ID = 'pasteShield.showLastReport';
 const CODELENS_FIX_COMMAND_ID = 'pasteShield.codeLensFix';
 const CODELENS_IGNORE_COMMAND_ID = 'pasteShield.codeLensIgnore';
 const CODELENS_DETAILS_COMMAND_ID = 'pasteShield.codeLensDetails';
+const CODELENS_FALSE_POSITIVE_COMMAND_ID = 'pasteShield.codeLensFalsePositive';
 const SHOW_DETECTION_DETAILS_COMMAND_ID = 'pasteShield.showDetectionDetails';
 const SHOW_HISTORY_COMMAND_ID = 'pasteShield.showHistory';
 const CLEAR_HISTORY_COMMAND_ID = 'pasteShield.clearHistory';
@@ -50,6 +52,7 @@ const SHOW_STATISTICS_COMMAND_ID = 'pasteShield.showStatistics';
 const EXPORT_AUDIT_LOG_COMMAND_ID = 'pasteShield.exportAuditLog';
 const SHOW_ROTATION_REMINDERS_COMMAND_ID = 'pasteShield.showRotationReminders';
 const ADD_TO_WORKSPACE_IGNORE_COMMAND_ID = 'pasteShield.addToWorkspaceIgnore';
+const EXPORT_FALSE_POSITIVES_COMMAND_ID = 'pasteShield.exportFalsePositiveLog';
 
 /**
  * File names (basename only, case-insensitive) that are excluded from
@@ -118,7 +121,7 @@ function createDecorationTypes(): {
 
 /**
  * One CodeLens "block" per detected issue — renders above the matched line
- * with three lenses side-by-side: severity badge | fix action | ignore action.
+ * with four lenses side-by-side: severity badge | view details | ignore | false positive.
  */
 class PasteShieldCodeLensProvider implements vscode.CodeLensProvider {
   private readonly _onDidChangeCodeLenses = new vscode.EventEmitter<void>();
@@ -189,6 +192,16 @@ class PasteShieldCodeLensProvider implements vscode.CodeLensProvider {
           tooltip: `Add "${det.type}" to pasteShield.ignoredPatterns`,
         }),
       );
+
+      // Lens 4 — "Mark as false positive" action
+      lenses.push(
+        new vscode.CodeLens(range, {
+          title: '$(report) Mark as false positive',
+          command: CODELENS_FALSE_POSITIVE_COMMAND_ID,
+          arguments: [[det], document.uri],
+          tooltip: 'Log this detection as a false positive locally',
+        }),
+      );
     }
 
     return lenses;
@@ -221,6 +234,7 @@ let statisticsManager: StatisticsManager | undefined;
 let statisticsPanel: vscode.WebviewPanel | undefined;
 let detailsPanel: vscode.WebviewPanel | undefined;
 let ignorePatternsManager: IgnorePatternsManager | undefined;
+let falsePositiveManager: FalsePositiveManager | undefined;
 let extensionContext: vscode.ExtensionContext | undefined;
 
 /**
@@ -252,6 +266,9 @@ export function registerPasteShield(context: vscode.ExtensionContext): void {
 
   // Initialize Ignore Patterns Manager
   ignorePatternsManager = IgnorePatternsManager.getInstance(context);
+
+  // Initialize False Positive Manager
+  falsePositiveManager = FalsePositiveManager.getInstance(context);
 
   // Register History Tree View in sidebar
   historyTreeView = vscode.window.createTreeView('pasteShieldHistory', {
@@ -290,6 +307,16 @@ export function registerPasteShield(context: vscode.ExtensionContext): void {
       CODELENS_IGNORE_COMMAND_ID,
       async (patternName: string) => {
         await addToIgnoredPatterns(patternName);
+        codeLensProvider?.refresh();
+      },
+    ),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      CODELENS_FALSE_POSITIVE_COMMAND_ID,
+      async (detections: DetectionResult[], documentUri?: vscode.Uri) => {
+        await reportFalsePositive(detections, documentUri);
         codeLensProvider?.refresh();
       },
     ),
@@ -399,6 +426,16 @@ export function registerPasteShield(context: vscode.ExtensionContext): void {
         return;
       }
       await exportAuditLog();
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(EXPORT_FALSE_POSITIVES_COMMAND_ID, async () => {
+      if (!falsePositiveManager) {
+        vscode.window.showWarningMessage('False positive manager not initialized.');
+        return;
+      }
+      await falsePositiveManager.exportLog();
     }),
   );
 
@@ -585,7 +622,7 @@ async function handlePaste(): Promise<void> {
     `PasteShield: ${summary}`,
     'Paste Anyway',
     'Show Details',
-    'Report False Positive',
+    'Mark as false positive',
     'Cancel',
   );
 
@@ -610,15 +647,15 @@ async function handlePaste(): Promise<void> {
     return;
   }
 
-  if (choice === 'Report False Positive') {
-    await reportFalsePositive(filtered, ignorePatternsManager);
+  if (choice === 'Mark as false positive') {
+    await reportFalsePositive(filtered, editor.document.uri);
     // After reporting, paste the content
     const insertRange = await insertText(editor, clipboardText);
     if (insertRange && config.showInlineDecorations) {
       applyDecoration(editor, insertRange, topSeverity);
     }
     debouncedRefreshCodeLens();
-    logger.info('PasteShield: false positive reported and pasted');
+    logger.info('PasteShield: false positive logged and pasted');
     return;
   }
 
@@ -891,49 +928,47 @@ async function addToIgnoredPatterns(patternName: string): Promise<void> {
 }
 
 /**
- * Reports a false positive by adding detected patterns to the ignored list.
+ * Logs false positives locally for later analysis.
  */
 async function reportFalsePositive(
   detections: DetectionResult[],
-  ignorePatternsManager?: IgnorePatternsManager,
+  documentUri?: vscode.Uri,
 ): Promise<void> {
-  if (detections.length === 0) {
+  if (!falsePositiveManager || detections.length === 0) {
     return;
   }
 
-  // Get unique pattern types from detections
   const patternTypes = [...new Set(detections.map(d => d.type))];
-  
+  let selectedPatterns: string[] = [];
+
   if (patternTypes.length === 1) {
-    // Single pattern type - add it directly
-    const patternName = patternTypes[0];
-    if (ignorePatternsManager) {
-      await ignorePatternsManager.addToWorkspaceIgnore(patternName);
-    } else {
-      await addToIgnoredPatterns(patternName);
-    }
+    selectedPatterns = patternTypes;
   } else {
-    // Multiple pattern types - let user choose which to ignore
     const selected = await vscode.window.showQuickPick(
-      patternTypes.map(p => ({ label: p, description: 'Add to ignored patterns' })),
+      patternTypes.map(p => ({ label: p, description: 'Log as false positive' })),
       {
         placeHolder: 'Select patterns to mark as false positives',
         canPickMany: true,
       }
     );
-
     if (selected && selected.length > 0) {
-      for (const item of selected) {
-        if (ignorePatternsManager) {
-          await ignorePatternsManager.addToWorkspaceIgnore(item.label);
-        } else {
-          await addToIgnoredPatterns(item.label);
-        }
-      }
-      vscode.window.showInformationMessage(
-        `PasteShield: ${selected.length} pattern(s) marked as false positive(s).`,
-      );
+      selectedPatterns = selected.map(item => item.label);
     }
+  }
+
+  if (selectedPatterns.length === 0) {
+    return;
+  }
+
+  const loggedCount = await falsePositiveManager.recordFalsePositives(
+    selectedPatterns,
+    documentUri,
+  );
+
+  if (loggedCount > 0) {
+    vscode.window.showInformationMessage(
+      `PasteShield: logged ${loggedCount} false positive(s) to .pasteshield-fp.json.`,
+    );
   }
 }
 
@@ -1060,11 +1095,15 @@ async function showLastReport(): Promise<void> {
 async function showStatisticsDashboard(): Promise<void> {
   if (!statisticsManager) return;
 
+  const falsePositiveStats = falsePositiveManager
+    ? await falsePositiveManager.getStats()
+    : undefined;
+
   const config = vscode.workspace.getConfiguration(CONFIG_SECTION);
   const statsMode = config.get<'visual' | 'ascii'>('statsMode', 'visual');
 
   if (statsMode === 'ascii') {
-    const report = statisticsManager.generateReport();
+    const report = statisticsManager.generateReport(falsePositiveStats);
     const doc = await vscode.workspace.openTextDocument({
       content: report,
       language: 'plaintext',
@@ -1108,6 +1147,12 @@ async function showStatisticsDashboard(): Promise<void> {
       detections: day.detections,
     })),
     topCategories: summary.topCategories.slice(0, 5),
+    falsePositiveSummary: falsePositiveStats
+      ? {
+          total: falsePositiveStats.total,
+          topPatterns: falsePositiveStats.topPatterns,
+        }
+      : { total: 0, topPatterns: [] },
   };
 
   const chartJsRoot = vscode.Uri.joinPath(
@@ -1190,6 +1235,7 @@ function buildStatisticsWebviewHtml(
     severityBreakdown: Array<{ label: string; value: number; color: string }>;
     dailyTrend: Array<{ date: string; detections: number }>;
     topCategories: Array<{ category: string; count: number }>;
+    falsePositiveSummary: { total: number; topPatterns: Array<{ patternName: string; count: number }> };
   },
 ): string {
   const nonce = getNonce();
@@ -1427,6 +1473,7 @@ function buildStatisticsWebviewHtml(
           'trend'
           'severity'
           'categories'
+          'falsePositives'
           'insights';
       }
     }
@@ -1439,6 +1486,7 @@ function buildStatisticsWebviewHtml(
           'trend'
           'severity'
           'categories'
+          'falsePositives'
           'insights';
       }
     }
@@ -1451,6 +1499,7 @@ function buildStatisticsWebviewHtml(
           'trend'
           'severity'
           'categories'
+          'falsePositives'
           'insights';
       }
       .shell { padding: 12px 12px 16px; }
@@ -1497,7 +1546,7 @@ function buildStatisticsWebviewHtml(
       grid-template-areas:
         'trend severity'
         'trend categories'
-        'insights categories';
+        'insights falsePositives';
       gap: 10px;
     }
 
@@ -1524,6 +1573,7 @@ function buildStatisticsWebviewHtml(
     .severity-card { grid-area: severity; }
     .categories-card { grid-area: categories; }
     .insights-card { grid-area: insights; }
+    .false-positives-card { grid-area: falsePositives; }
 
     .trend-canvas { height: 180px; }
     .trend-canvas canvas { width: 100% !important; height: 100% !important; }
@@ -1597,6 +1647,19 @@ function buildStatisticsWebviewHtml(
     }
 
     .category-list { display: grid; gap: 8px; }
+
+    .false-positive-list { display: grid; gap: 8px; }
+
+    .false-positive-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .false-positive-name { font-weight: 600; }
+    .false-positive-count { color: var(--muted); font-variant-numeric: tabular-nums; }
 
     .category-item {
       display: grid;
@@ -1734,6 +1797,11 @@ function buildStatisticsWebviewHtml(
         <div class="category-list" id="categoryList"></div>
       </div>
 
+      <div class="card false-positives-card">
+        <h2><span class="codicon codicon-thumbsup"></span>False Positives</h2>
+        <div class="false-positive-list" id="falsePositiveList"></div>
+      </div>
+
       <div class="card insights-card">
         <h2><span class="codicon codicon-lightbulb"></span>Key Insights</h2>
         <div class="insights" id="insightList"></div>
@@ -1756,6 +1824,7 @@ function buildStatisticsWebviewHtml(
         severityBreakdown: data.severityBreakdown,
         dailyTrend: data.dailyTrend,
         topCategories: data.topCategories,
+        falsePositiveSummary: data.falsePositiveSummary,
       };
       vscode.postMessage({
         command: 'downloadStatistics',
@@ -1960,6 +2029,31 @@ function buildStatisticsWebviewHtml(
         requestAnimationFrame(() => {
           bar.style.width = String(widthPercent) + '%';
         });
+      });
+    }
+
+    const falsePositiveList = document.getElementById('falsePositiveList');
+    if (!data.falsePositiveSummary.topPatterns.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'No false positives logged yet. Use "Mark as false positive" to populate this list.';
+      falsePositiveList.appendChild(empty);
+    } else {
+      data.falsePositiveSummary.topPatterns.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'false-positive-item';
+
+        const name = document.createElement('span');
+        name.className = 'false-positive-name';
+        name.textContent = item.patternName;
+
+        const count = document.createElement('span');
+        count.className = 'false-positive-count';
+        count.textContent = formatNumber(item.count);
+
+        row.appendChild(name);
+        row.appendChild(count);
+        falsePositiveList.appendChild(row);
       });
     }
 

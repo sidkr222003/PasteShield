@@ -373,6 +373,12 @@
         "icon": "$(mute)"
       },
       {
+        "command": "pasteShield.codeLensFalsePositive",
+        "title": "Mark as false positive",
+        "category": "PasteShield",
+        "icon": "$(report)"
+      },
+      {
         "command": "pasteShield.codeLensFix",
         "title": "Open Ignored Patterns Settings",
         "category": "PasteShield",
@@ -419,6 +425,12 @@
         "title": "Export Audit Log",
         "category": "PasteShield",
         "icon": "$(output)"
+      },
+      {
+        "command": "pasteShield.exportFalsePositiveLog",
+        "title": "Export False Positive Log",
+        "category": "PasteShield",
+        "icon": "$(report)"
       },
       {
         "command": "pasteShield.showRotationReminders",
@@ -496,6 +508,10 @@
         {
           "command": "pasteShield.showStatistics",
           "group": "3_analysis@1"
+        },
+        {
+          "command": "pasteShield.exportFalsePositiveLog",
+          "group": "3_analysis@2"
         },
         {
           "command": "pasteShield.manageCustomPatterns",
