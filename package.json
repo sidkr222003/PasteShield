@@ -46,6 +46,8 @@
     "publish": "npx @vscode/vsce publish"
   },
   "dependencies": {
+    "chart.js": "^4.4.6",
+    "@vscode/codicons": "^0.0.36",
     "minimatch": "^9.0.9"
   },
   "devDependencies": {
@@ -83,6 +85,20 @@
           "type": "boolean",
           "default": true,
           "description": "Show a temporary inline gutter decoration at the insertion point after a warned paste (auto-clears after 10 seconds).",
+          "scope": "window"
+        },
+        "pasteShield.statsMode": {
+          "type": "string",
+          "default": "visual",
+          "enum": [
+            "visual",
+            "ascii"
+          ],
+          "enumDescriptions": [
+            "Show the statistics dashboard in a visual webview with charts.",
+            "Show the legacy ASCII dashboard in a text editor."
+          ],
+          "description": "Choose how PasteShield statistics are rendered.",
           "scope": "window"
         },
         "pasteShield.minimumSeverity": {
@@ -577,3 +593,5 @@
     ]
   }
 }
+
+
